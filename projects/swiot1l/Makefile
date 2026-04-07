@@ -18,11 +18,18 @@ endif
 
 NO_OS_DOMAIN_NAME=swiot1l
 
+## Ben Setup
 ifeq (y,$(strip $(SWIOT1L_STATIC_IP)))
-NO_OS_IP=192.168.97.40
-NO_OS_NETMASK=255.255.0.0
-NO_OS_GATEWAY=0.0.0.0
+NO_OS_IP=192.168.10.5
+NO_OS_NETMASK=255.255.255.0
+NO_OS_GATEWAY=192.168.10.1
 endif
+
+# ifeq (y,$(strip $(SWIOT1L_STATIC_IP)))
+# NO_OS_IP=192.168.0.80
+# NO_OS_NETMASK=255.255.255.0
+# NO_OS_GATEWAY=192.168.0.1
+# endif
 
 include ../../tools/scripts/generic_variables.mk
 
@@ -33,3 +40,4 @@ include ../../tools/scripts/generic.mk
 CFLAGS += -DNO_OS_LWIP_NETWORKING
 CFLAGS += -DIIO_IGNORE_BUFF_OVERRUN_ERR
 CFLAGS += -DNO_OS_LWIP_INIT_ONETIME=1
+CFLAGS += -DDISABLE_SECURE_SOCKET

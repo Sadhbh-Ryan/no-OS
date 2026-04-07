@@ -4,7 +4,8 @@ ifndef MAXIM_LIBRARIES
 $(error MAXIM_LIBRARIES not defined.$(ENDL))
 endif
 
-export INCLUDE_OTHER_PATTERN	= $(PROJECT_BUILD)/root/MaximSDK/Libraries
+# export INCLUDE_OTHER_PATTERN	= $(PROJECT_BUILD)/root/MaximSDK/Libraries
+export INCLUDE_OTHER_PATTERN	= $(PROJECT_BUILD)/root/analog/cfs/2.0.0
 export INCLUDE_OTHER_CORRECTED	= $(MAXIM_LIBRARIES)
 CC=arm-none-eabi-gcc
 AR=arm-none-eabi-ar
@@ -15,7 +16,8 @@ OC=arm-none-eabi-objcopy
 SIZE=arm-none-eabi-size
 
 PYTHON = python
-ARM_COMPILER_PATH = $(realpath $(dir $(shell find $(MAXIM_LIBRARIES)/../Tools/GNUTools -wholename "*bin/$(CC)" -o -name "$(CC).exe")))
+# ARM_COMPILER_PATH = $(realpath $(dir $(shell find $(MAXIM_LIBRARIES)/../Tools/GNUTools -wholename "*bin/$(CC)" -o -name "$(CC).exe")))
+ARM_COMPILER_PATH = $(realpath $(dir $(shell find $(MAXIM_LIBRARIES)/../../../Tools/gcc/arm-none-eabi -wholename "*bin/$(CC)" -o -name "$(CC).exe")))
 
 # Use the user provided compiler if the SDK doesn't contain it.
 ifeq ($(ARM_COMPILER_PATH),)
@@ -35,7 +37,7 @@ ifneq "$(STACK_SIZE)" ""
 CFLAGS+=-D_STACK_SIZE=$(STACK_SIZE)
 endif
 
-TARGET?=max32660
+TARGET?=max32650
 TARGET_NUMBER:=$(word 2,$(subst x, ,$(subst X, ,$(TARGET))))
 TARGET_UCASE=$(addprefix MAX,$(TARGET_NUMBER))
 TARGET_LCASE=$(addprefix max,$(TARGET_NUMBER))
@@ -56,8 +58,10 @@ TARGET_REV=0x4131
 
 TARGETCFG=$(TARGET_LCASE).cfg
 
-OPENOCD_SCRIPTS=$(MAXIM_LIBRARIES)/../Tools/OpenOCD/scripts
-OPENOCD_BIN=$(MAXIM_LIBRARIES)/../Tools/OpenOCD
+# OPENOCD_SCRIPTS=$(MAXIM_LIBRARIES)/../Tools/OpenOCD/scripts
+# OPENOCD_BIN=$(MAXIM_LIBRARIES)/../Tools/OpenOCD
+OPENOCD_SCRIPTS=$(MAXIM_LIBRARIES)/../../../Tools/openocd/share/openocd/scripts
+OPENOCD_BIN=$(MAXIM_LIBRARIES)/../../../Tools/openocd/bin
 GDB_PATH=$(ARM_COMPILER_PATH)
 OPENOCD_SVD=$(MAXIM_LIBRARIES)/CMSIS/Device/Maxim/$(TARGET_UCASE)/Include
 TARGETSVD=$(TARGET)
