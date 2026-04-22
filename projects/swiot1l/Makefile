@@ -6,6 +6,8 @@ TARGET = max32650
 
 CONFIG_SWIOT1L_OA_TC6_SPI ?= n
 
+LDFLAGS += -Wl,-Map=build/swiot1l.map,--cref
+
 ifeq (y,$(strip $(CONFIG_SWIOT1L_OA_TC6_SPI)))
 CFLAGS += -DSWIOT1L_OA_TC6_SPI=1
 else
@@ -19,17 +21,17 @@ endif
 NO_OS_DOMAIN_NAME=swiot1l
 
 ## Ben Setup
-ifeq (y,$(strip $(SWIOT1L_STATIC_IP)))
-NO_OS_IP=192.168.10.5
-NO_OS_NETMASK=255.255.255.0
-NO_OS_GATEWAY=192.168.10.1
-endif
-
 # ifeq (y,$(strip $(SWIOT1L_STATIC_IP)))
-# NO_OS_IP=192.168.0.80
+# NO_OS_IP=192.168.10.5
 # NO_OS_NETMASK=255.255.255.0
-# NO_OS_GATEWAY=192.168.0.1
+# NO_OS_GATEWAY=192.168.10.1
 # endif
+
+ifeq (y,$(strip $(SWIOT1L_STATIC_IP)))
+NO_OS_IP=192.168.0.80
+NO_OS_NETMASK=255.255.255.0
+NO_OS_GATEWAY=192.168.0.1
+endif
 
 include ../../tools/scripts/generic_variables.mk
 

@@ -47,6 +47,8 @@
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
 
+#include "adt75.h"
+
 static void message_handler(struct mqtt_message_data *msg)
 {
 	msg->message.payload[msg->message.len] = 0;
@@ -61,8 +63,10 @@ int swiot1l_mqtt()
 	struct ad74413r_decimal val;
 	char val_buff[32];
 	uint32_t msg_len;
+	uint32_t adt75_val;
 	int ret;
 
+	struct adt75_desc* adt75;
 	struct ad74413r_desc *ad74413r;
 	struct lwip_network_param lwip_ip = {
 		.platform_ops = &adin1110_lwip_ops,
@@ -149,6 +153,13 @@ int swiot1l_mqtt()
 	ad74413r_set_channel_dac_code(ad74413r, 1, 1000);
 	ad74413r_set_channel_dac_code(ad74413r, 3, 3000);
 
+	ret = adt75_init(&adt75, &adt75_ip);
+	if (ret)
+	{
+		printf("ADT75 Init Error\n\r");
+		return ret;
+	}
+
 	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
 	memcpy(lwip_ip.hwaddr, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
 
@@ -195,8 +206,8 @@ int swiot1l_mqtt()
 
 	struct mqtt_connect_config conn_config = {
 		.version = MQTT_VERSION_3_1_1,
-		.keep_alive_ms = 1000,
-		.client_name = "maxim",
+		.keep_alive_ms = 2000,
+		.client_name = "swiot1l",
 		.username = NULL,
 		.password = NULL
 	};
@@ -232,10 +243,10 @@ int swiot1l_mqtt()
 		ad74413r_adc_get_value(ad74413r, 0, &val);
 		memset(val_buff, 0, sizeof(val_buff));
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld mV", val.integer,
+			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld", val.integer,
 					   abs(val.decimal));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld mV", val.integer,
+			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
 					   abs(val.decimal));
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, "ad74413r/channel0", &test_msg);
@@ -247,11 +258,11 @@ int swiot1l_mqtt()
 		ad74413r_adc_get_value(ad74413r, 1, &val);
 		memset(val_buff, 0, sizeof(val_buff));
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld mV",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld",
 					   val.integer / 1000,
 					   abs(val.decimal));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld mV", val.integer,
+			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
 					   abs(val.decimal));
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, "ad74413r/channel1", &test_msg);
@@ -262,7 +273,7 @@ int swiot1l_mqtt()
 
 		ad74413r_adc_get_value(ad74413r, 2, &val);
 		memset(val_buff, 0, sizeof(val_buff));
-		msg_len = snprintf(val_buff, sizeof(val_buff), "%lld Ω",
+		msg_len = snprintf(val_buff, sizeof(val_buff), "%lld",
 				   val.integer / 1000,
 				   abs(val.decimal));
 		test_msg.len = msg_len;
@@ -276,11 +287,11 @@ int swiot1l_mqtt()
 		memset(val_buff, 0, sizeof(val_buff));
 
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld"".%02lu mA",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld"".%02lu",
 					   val.integer,
 					   abs(val.decimal / 1000000));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld"".%02lu mA",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld"".%02lu",
 					   val.integer,
 					   abs(val.decimal / 1000000));
 		test_msg.len = msg_len;
@@ -290,7 +301,22 @@ int swiot1l_mqtt()
 			goto free_mqtt;
 		}
 
-		no_os_mdelay(1000);
+		ret = adt75_get_single_temp(adt75, &adt75_val);
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret)
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "%.03f", ((double)adt75_val / 1000));
+			// printf("Temperature Reading : %.03f C\n\r", ((double)adt75_val / 1000));
+		}
+		else
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+			// printf("No Valid temperature Data - %d\n\r", ret);
+		}
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, "adt75/temperature", &test_msg);
+
+		no_os_mdelay(2000);
 	}
 
 	return 0;
