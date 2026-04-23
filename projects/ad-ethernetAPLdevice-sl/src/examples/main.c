@@ -1,6 +1,6 @@
 /***************************************************************************//**
- *   @file   common_data.c
- *   @brief  Defines data common to all examples.
+ *   @file   main.c
+ *   @brief  Main file for the apard32690 project.
  *   @author Ciprian Regus (ciprian.regus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
@@ -30,79 +30,52 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
-
 #include "common_data.h"
-#include "maxim_gpio.h"
-#include "maxim_spi.h"
+#include "no_os_init.h"
 
-#if defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
-#include "adin1110.h"
+#if defined(HP_TCP_ECHO_SERVER)
+#include "tcp_echo_server_example.h"
+#elif defined(HP_BASIC_EXAMPLE)
+#include "hello_world.h"
+#elif defined(HP_AD7124_APP)
+#include "ad7124_app.h"
+#elif defined(HP_MAX6613_APP)
+#include "max6613_app.h"
+#elif defined(HP_IIO_EXAMPLE)
+#include "iio_example.h"
+#elif defined(HP_MQTT_BAREMETAL)
+#include "mqtt_baremetal.h"
+#elif defined(HP_MQTT_FREERTOS)
+#include "mqtt_freertos.h"
+#elif defined(HP_PING_EXAMPLE)
+#include "ping_example.h"
 #endif
 
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE)
-#include "adin1110.h"
-#include "lwip_socket.h"
-#include "lwip_adin1110.h"
+/***************************************************************************//**
+ * @brief Main function execution.
+ *
+ * @return ret - Result of the enabled examples execution.
+*******************************************************************************/
+int main()
+{
+#if defined(HP_BASIC_EXAMPLE)
+	return hello_world_main();
+#elif defined(HP_AD7124_APP)
+	return ad7124_app_main();
+#elif defined(HP_MAX6613_APP)
+	return max6613_app_main();
+#elif defined(HP_TCP_ECHO_SERVER)
+	return tcp_echo_server_example_main();
+#elif defined(HP_IIO_EXAMPLE)
+	return iio_example_main();
+#elif defined(HP_MQTT_BAREMETAL)
+	return mqtt_baremetal_main();
+#elif defined(HP_MQTT_FREERTOS)
+	// int ret;
+	return create_tasks();
+#elif defined(HP_PING_EXAMPLE)
+	return ping_example_main();
 #endif
 
-struct max_uart_init_param uart_extra_ip = {
-	.flow = MAX_UART_FLOW_DIS
-};
-
-struct no_os_uart_init_param uart_ip = {
-	.device_id = 0,
-	.asynchronous_rx = false,
-	.baud_rate = 115200,
-	.size = NO_OS_UART_CS_8,
-	.parity = NO_OS_UART_PAR_NO,
-	.stop = NO_OS_UART_STOP_1_BIT,
-	.extra = &uart_extra_ip,
-	.platform_ops = &max_uart_ops,
-};
-
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE) 
-
-const struct max_spi_init_param adin1110_spi_extra = {
-	.num_slaves = 1,
-	.polarity = SPI_SS_POL_LOW,
-	.vssel = MXC_GPIO_VSSEL_VDDIOH,
-};
-
-const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
-	.port = 0,
-	.number = 15,
-	.pull = NO_OS_PULL_NONE,
-	.platform_ops = &max_gpio_ops,
-	.extra = &(struct max_gpio_init_param)
-	{
-		.vssel = 1
-	},
-};
-
-const struct no_os_spi_init_param adin1110_spi_ip = {
-	.device_id = 3,
-	.max_speed_hz = 25000000,
-	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
-	.mode = NO_OS_SPI_MODE_0,
-	.platform_ops = &max_spi_ops,
-	.chip_select = 0,
-	.extra = &adin1110_spi_extra,
-};
-
-struct adin1110_init_param adin1110_ip = {
-	.chip_type = ADIN1110,
-	.comm_param = adin1110_spi_ip,
-	.reset_param = adin1110_rst_gpio_ip,
-	.mac_address = {0x00, 0x18, 0x80, 0x03, 0x25, 0x80},
-	.append_crc = false
-};
-
-#endif
-
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE)
-
-struct lwip_network_param lwip_ip = {
-	.platform_ops = &adin1110_lwip_ops,
-	.mac_param = &adin1110_ip,
-};
-#endif
+	return 0;
+}

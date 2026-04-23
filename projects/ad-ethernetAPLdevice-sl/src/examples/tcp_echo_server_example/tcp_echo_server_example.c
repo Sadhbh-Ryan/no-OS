@@ -1,6 +1,6 @@
 /***************************************************************************//**
- *   @file   common_data.c
- *   @brief  Defines data common to all examples.
+ *   @file   tcp_echo_server_example.c
+ *   @brief  Implementation of the TCP echo server example.
  *   @author Ciprian Regus (ciprian.regus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
@@ -31,62 +31,41 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
+#include <stdio.h>
 #include "common_data.h"
-#include "maxim_gpio.h"
-#include "maxim_spi.h"
 
-#if defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
-#include "adin1110.h"
-#endif
-
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE)
-#include "adin1110.h"
 #include "lwip_socket.h"
+#include "tcp_socket.h"
+#include "no_os_error.h"
+#include "adin1110.h"
 #include "lwip_adin1110.h"
-#endif
+#include "network_interface.h"
 
-struct max_uart_init_param uart_extra_ip = {
-	.flow = MAX_UART_FLOW_DIS
-};
-
-struct no_os_uart_init_param uart_ip = {
-	.device_id = 0,
-	.asynchronous_rx = false,
-	.baud_rate = 115200,
-	.size = NO_OS_UART_CS_8,
-	.parity = NO_OS_UART_PAR_NO,
-	.stop = NO_OS_UART_STOP_1_BIT,
-	.extra = &uart_extra_ip,
-	.platform_ops = &max_uart_ops,
-};
-
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE) 
-
-const struct max_spi_init_param adin1110_spi_extra = {
+const struct max_spi_init_param spi_extra = {
 	.num_slaves = 1,
 	.polarity = SPI_SS_POL_LOW,
-	.vssel = MXC_GPIO_VSSEL_VDDIOH,
+	.vssel = MXC_GPIO_VSSEL_VDDIO,
 };
 
 const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
-	.port = 0,
-	.number = 15,
+	.port = ADIN1110_RESET_PORT,
+	.number = ADIN1110_RESET_PIN,
 	.pull = NO_OS_PULL_NONE,
 	.platform_ops = &max_gpio_ops,
 	.extra = &(struct max_gpio_init_param)
 	{
-		.vssel = 1
+		.vssel = 0
 	},
 };
 
 const struct no_os_spi_init_param adin1110_spi_ip = {
-	.device_id = 3,
-	.max_speed_hz = 25000000,
+	.device_id = ADIN1110_SPI_DEVICE_ID,
+	.max_speed_hz = ADIN1110_SPI_CLK_SPEED,
 	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
 	.mode = NO_OS_SPI_MODE_0,
 	.platform_ops = &max_spi_ops,
-	.chip_select = 0,
-	.extra = &adin1110_spi_extra,
+	.chip_select = ADIN1110_SPI_CHIP_SEL,
+	.extra = &spi_extra,
 };
 
 struct adin1110_init_param adin1110_ip = {
@@ -94,15 +73,80 @@ struct adin1110_init_param adin1110_ip = {
 	.comm_param = adin1110_spi_ip,
 	.reset_param = adin1110_rst_gpio_ip,
 	.mac_address = {0x00, 0x18, 0x80, 0x03, 0x25, 0x80},
-	.append_crc = false
+	.append_crc = false,
+	.oa_tc6_spi = true,
+	.oa_tc6_prote = true,
 };
-
-#endif
-
-#if defined(APARD32690_ECHO_SERVER_EXAMPLE) || defined(APARD32690_MQTT_EXAMPLE)
 
 struct lwip_network_param lwip_ip = {
 	.platform_ops = &adin1110_lwip_ops,
 	.mac_param = &adin1110_ip,
 };
-#endif
+
+/***************************************************************************//**
+ * @brief TCP echo example main execution.
+ *
+ * @return ret - Result of the example execution.
+*******************************************************************************/
+int tcp_echo_server_example_main()
+{
+	bool connected = false;
+	struct tcp_socket_desc *server_socket;
+	struct tcp_socket_desc *client_socket;
+	struct lwip_network_desc *lwip_desc;
+	struct tcp_socket_init_param tcp_ip = {
+		.max_buff_size = 0
+	};
+
+	uint8_t read_byte;
+	uint8_t adin1110_mac_address[6] = {0x00, 0x18, 0x80, 0x03, 0x25, 0x60};
+	struct no_os_uart_desc *uart_desc;
+	int ret;
+
+	ret = no_os_uart_init(&uart_desc, &uart_ip);
+	if (ret)
+		return ret;
+
+	no_os_uart_stdio(uart_desc);
+
+	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
+	memcpy(lwip_ip.hwaddr, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
+
+	ret = no_os_lwip_init(&lwip_desc, &lwip_ip);
+	if (ret)
+		return ret;
+
+	tcp_ip.net = &lwip_desc->no_os_net;
+
+	ret = socket_init(&server_socket, &tcp_ip);
+	if (ret)
+		return ret;
+
+	ret = socket_bind(server_socket, 10000);
+	if (ret)
+		return ret;
+
+	ret = socket_listen(server_socket, MAX_BACKLOG);
+	if (ret)
+		return ret;
+
+	while (1) {
+		ret = socket_accept(server_socket, &client_socket);
+		if (ret && ret != -EAGAIN)
+			return ret;
+
+		if (!ret) {
+			connected = true;
+		}
+
+		no_os_lwip_step(server_socket->net->net, NULL);
+
+		if (connected) {
+			ret = socket_recv(client_socket, &read_byte, 1);
+			if (ret > 0)
+				socket_send(client_socket, &read_byte, ret);
+		}
+	}
+
+	return 0;
+}

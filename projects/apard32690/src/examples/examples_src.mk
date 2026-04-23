@@ -43,12 +43,6 @@ INCS += $(NO-OS)/network/noos_mbedtls_config.h
 INCS += $(NO-OS)/network/network_interface.h
 SRCS += $(NO-OS)/network/tcp_socket.c
 
-# INCS += $(NO-OS)/iio/iio_trigger.h
-# INCS += $(NO-OS)/iio/iio.h
-# INCS += $(NO-OS)/iio/iio_types.h
-# SRC_DIRS += $(NO-OS)/iio/iio_app
-# SRCS += $(NO-OS)/iio/iio_trigger.c
-
 # MBED_TLS_CONFIG_FILE = $(PROJECT)/src/examples/secure_mqtt_example_baremetal/noos_mbedtls_config.h
 
 # LIBRARIES += mbedtls
