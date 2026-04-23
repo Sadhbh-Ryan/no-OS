@@ -240,20 +240,20 @@ int swiot1l_mqtt()
 	while (1) {
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
-		ad74413r_adc_get_value(ad74413r, 0, &val);
-		memset(val_buff, 0, sizeof(val_buff));
-		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld", val.integer,
-					   abs(val.decimal));
-		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
-					   abs(val.decimal));
-		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, "ad74413r/channel0", &test_msg);
-		if (ret) {
-			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-			goto free_mqtt;
-		}
+		// ad74413r_adc_get_value(ad74413r, 0, &val);
+		// memset(val_buff, 0, sizeof(val_buff));
+		// if (val.integer == 0 && val.decimal < 0)
+		// 	msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld", val.integer,
+		// 			   abs(val.decimal));
+		// else
+		// 	msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
+		// 			   abs(val.decimal));
+		// test_msg.len = msg_len;
+		// ret = mqtt_publish(mqtt, "ad74413r/channel0", &test_msg);
+		// if (ret) {
+		// 	pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
+		// 	goto free_mqtt;
+		// }
 
 		ad74413r_adc_get_value(ad74413r, 1, &val);
 		memset(val_buff, 0, sizeof(val_buff));

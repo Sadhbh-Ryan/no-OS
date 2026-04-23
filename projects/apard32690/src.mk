@@ -6,6 +6,12 @@ INCS += $(PROJECT)/src/common/common_data.h
 SRCS += $(PROJECT)/src/common/common_data.c
 
 SRCS += $(DRIVERS)/api/no_os_uart.c     \
+        $(DRIVERS)/api/no_os_i2c.c \
+        $(DRIVERS)/api/no_os_timer.c \
+        $(DRIVERS)/api/no_os_mdio.c \
+        $(NO-OS)/util/no_os_crc8.c \
+        $(NO-OS)/util/no_os_alloc.c \
+        $(DRIVERS)/api/no_os_trng.c \
 	$(DRIVERS)/api/no_os_irq.c     	\
 	$(DRIVERS)/api/no_os_spi.c     	\
 	$(DRIVERS)/api/no_os_gpio.c     	\
@@ -15,10 +21,16 @@ SRCS += $(DRIVERS)/api/no_os_uart.c     \
         $(NO-OS)/util/no_os_list.c      \
         $(NO-OS)/util/no_os_lf256fifo.c \
         $(NO-OS)/util/no_os_util.c      \
-        $(NO-OS)/util/no_os_alloc.c     \
-        $(NO-OS)/util/no_os_mutex.c
+        $(NO-OS)/util/no_os_alloc.c
 
 INCS += $(INCLUDE)/no_os_delay.h     \
+        $(INCLUDE)/no_os_dma.h      \
+        $(INCLUDE)/no_os_crc8.h      \
+        $(INCLUDE)/no_os_i2c.h      \
+        $(INCLUDE)/no_os_mdio.h      \
+        $(INCLUDE)/no_os_alloc.h \
+        $(INCLUDE)/no_os_trng.h \
+        $(INCLUDE)/no_os_fifo.h      \
         $(INCLUDE)/no_os_error.h     \
         $(INCLUDE)/no_os_fifo.h      \
         $(INCLUDE)/no_os_spi.h      \
@@ -36,5 +48,6 @@ INCS += $(INCLUDE)/no_os_delay.h     \
         $(INCLUDE)/no_os_util.h      \
         $(INCLUDE)/no_os_alloc.h     \
         $(INCLUDE)/no_os_mutex.h        \
+        $(INCLUDE)/no_os_circular_buffer.h      \
         $(INCLUDE)/no_os_semaphore.h
 

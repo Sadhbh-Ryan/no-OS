@@ -1,7 +1,7 @@
 /***************************************************************************//**
- *   @file   main.c
- *   @brief  Main file for the apard32690 project.
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @file   maxim_trng.h
+ *   @brief  MAX32650 specific header for TRNG driver
+ *   @author Antoniu Miclaus (antoniu.miclaus@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -30,39 +30,22 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
-#include "common_data.h"
-#include "no_os_init.h"
 
-#if defined(APARD32690_MQTT_EXAMPLE)
-#include "mqtt_example.h"
-#elif defined(APARD32690_ECHO_SERVER_EXAMPLE)
-#include "tcp_echo_server_example.h"
-#elif defined(APARD32690_BASIC_EXAMPLE)
-#include "basic_example.h"
-#elif defined(APARD32690_ESH_EXAMPLE)
-#include "esh_example.h"
-#elif defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
-#include "adin1110_standalone_example.h"
-#endif
+#ifndef MAXIM_TRNG_H
+#define MAXIM_TRNG_H
 
-/***************************************************************************//**
- * @brief Main function execution.
- *
- * @return ret - Result of the enabled examples execution.
-*******************************************************************************/
-int main()
-{
-#if defined(APARD32690_MQTT_EXAMPLE)
-	return mqtt_example_main();
-#elif defined(APARD32690_ECHO_SERVER_EXAMPLE)
-	return tcp_echo_server_example_main();
-#elif defined(APARD32690_BASIC_EXAMPLE)
-	return basic_example_main();
-#elif defined(APARD32690_ESH_EXAMPLE)
-	return esh_example_main();
-#elif defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
-	return adin1110_standalone_example_main();
-#endif
+/******************************************************************************/
+/***************************** Include Files **********************************/
+/******************************************************************************/
+#include "no_os_trng.h"
 
-	return 0;
-}
+/******************************************************************************/
+/*************************** Types Declarations *******************************/
+/******************************************************************************/
+
+/**
+ * @brief Max32650 specific TRNG platform ops structure
+ */
+extern const struct no_os_trng_platform_ops max_trng_ops;
+
+#endif // MAXIM_TRNG_H
