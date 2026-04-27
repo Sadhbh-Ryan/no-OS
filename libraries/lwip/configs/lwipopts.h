@@ -32,6 +32,11 @@
 #ifndef LWIP_LWIPOPTS_H
 #define LWIP_LWIPOPTS_H
 
+#define SNTP_SERVER_DNS 1
+#define LWIP_DNS  1
+#define LWIP_DEBUG   1
+#define LWIP_SNTP 1
+
 /* NO_SYS==1: Use lwIP without OS-awareness (no thread and etc.) */
 #define NO_SYS                     		1
 #define LWIP_SOCKET                		0

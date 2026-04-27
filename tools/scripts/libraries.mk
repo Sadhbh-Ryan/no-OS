@@ -108,15 +108,15 @@ EXTRA_LIBS_PATHS		+= $(AZURE_DIR_BUILD_LIBS)/iot
 EXTRA_LIBS_PATHS		+= $(AZURE_DIR_BUILD_LIBS)/platform
 EXTRA_LIBS_PATHS		+= $(AZURE_DIR_BUILD_LIBS)/core
 
-AZURE_BUILD_CMD = $(shell mkdir -p $(AZURE_DIR_BUILD) && \
-		    cd $(AZURE_DIR_BUILD) && \
-		    cmake -DCMAKE_TOOLCHAIN_FILE=../../noos-azure-toolchain.cmake .. >/dev/null && \
-		    cmake --build . >/dev/null)
+# AZURE_BUILD_CMD = $(shell mkdir -p $(AZURE_DIR_BUILD) && \
+# 		    cd $(AZURE_DIR_BUILD) && \
+# 		    cmake -DCMAKE_TOOLCHAIN_FILE=../../noos-azure-toolchain.cmake .. >/dev/null && \
+# 		    cmake --build . >/dev/null)
 
-CLEAN_AZURE = $(shell rm -rf $(AZURE_DIR_BUILD))
+# CLEAN_AZURE = $(shell rm -rf $(AZURE_DIR_BUILD))
 
-$(AZURE_LIBS):
-	$(AZURE_BUILD_CMD)
+# $(AZURE_LIBS):
+# 	$(AZURE_BUILD_CMD)
 
 # Custom settings
 CFLAGS += -I$(AZURE_DIR)/sdk/inc

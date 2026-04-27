@@ -1,4 +1,6 @@
 LIBRARIES += lwip
+INCS += $(PROJECT)/src/common/sntp.h
+SRCS += $(PROJECT)/src/common/sntp.c
 
 include $(PROJECT)/src/platform/$(PLATFORM)/platform_src.mk
 
@@ -37,7 +39,8 @@ INCS += $(INCLUDE)/no_os_delay.h     \
 		$(INCLUDE)/no_os_lf256fifo.h \
 		$(INCLUDE)/no_os_util.h \
 		$(INCLUDE)/no_os_units.h \
-		$(INCLUDE)/no_os_alloc.h
+		$(INCLUDE)/no_os_alloc.h	\
+		$(INCLUDE)/no_os_trng.h
 
 SRCS += $(DRIVERS)/api/no_os_gpio.c \
 		$(NO-OS)/util/no_os_lf256fifo.c \
@@ -52,7 +55,8 @@ SRCS += $(DRIVERS)/api/no_os_gpio.c \
 		$(NO-OS)/util/no_os_crc8.c \
 		$(NO-OS)/util/no_os_util.c \
 		$(NO-OS)/util/no_os_mutex.c \
-		$(NO-OS)/util/no_os_alloc.c
+		$(NO-OS)/util/no_os_alloc.c	\
+		$(DRIVERS)/api/no_os_trng.c
 
 INCS += $(DRIVERS)/adc-dac/ad74413r/ad74413r.h
 SRCS += $(DRIVERS)/adc-dac/ad74413r/ad74413r.c
@@ -108,8 +112,31 @@ ifndef SWIOT1L_MQTT_SERVER_PORT
 SWIOT1L_MQTT_SERVER_PORT=1883
 endif
 
+ifndef AZURE_DEVICE_ID
+AZURE_DEVICE_ID= sensor_1
+endif
+
+ifndef AZURE_REQUEST_ID
+AZURE_REQUEST_ID= 1
+endif
+
+ifndef AZURE_DEVICE_PRIMARY_KEY
+AZURE_DEVICE_PRIMARY_KEY= pbO+3XvNcL3dWaMCjscmeCBleBBHQPTyN0oFKkMUHpM=
+endif
+
 CFLAGS += -DSWIOT1L_MQTT_SERVER_IP=\"$(SWIOT1L_MQTT_SERVER_IP)\"
 CFLAGS += -DSWIOT1L_MQTT_SERVER_PORT=$(SWIOT1L_MQTT_SERVER_PORT)
+CFLAGS += -DAZURE_DEVICE_ID=\"$(AZURE_DEVICE_ID)\"
+CFLAGS += -DAZURE_REQUEST_ID=\"$(AZURE_REQUEST_ID)\"
+CFLAGS += -DAZURE_DEVICE_PRIMARY_KEY=\"$(AZURE_DEVICE_PRIMARY_KEY)\"
+
+LIBRARIES += azure-sdk-for-c
+
+LIBRARIES += mbedtls
+INCS +=$(PROJECT)/src/common/certs.h
+INCS += $(NO-OS)/libraries/mbedtls/include/mbedtls/ssl.h
+MBED_TLS_CONFIG_FILE = $(PROJECT)/src/common/noos_mbedtls_config.h
+SRC_DIRS += $(NO-OS)/libraries/mbedtls/library
 
 CFLAGS += -DSWIOT1L_MQTT_EXAMPLE
 LIBRARIES += mqtt
