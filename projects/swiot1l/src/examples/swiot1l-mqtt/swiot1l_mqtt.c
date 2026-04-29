@@ -407,6 +407,11 @@ int swiot1l_mqtt()
 		goto free_socket;
 	}
 
+	ret = create_and_configure_mqtt_client_for_iot_hub();
+	if (ret != AZ_OK){
+		goto free_mqtt;
+	}
+
 	struct mqtt_connect_config conn_config = {
 		.version = MQTT_VERSION_3_1_1,
 		.keep_alive_ms = 2000,
