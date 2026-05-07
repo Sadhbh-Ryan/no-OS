@@ -37,6 +37,11 @@
 #define LWIP_DEBUG   1
 #define LWIP_SNTP 1
 
+
+// #define TCP_DEBUG LWIP_DBG_ON
+// #define SNTP_DEBUG LWIP_DBG_ON
+// #define DNS_DEBUG LWIP_DBG_ON
+
 /* NO_SYS==1: Use lwIP without OS-awareness (no thread and etc.) */
 #define NO_SYS                     		1
 #define LWIP_SOCKET                		0

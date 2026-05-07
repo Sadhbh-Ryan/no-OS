@@ -34,6 +34,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "swiot1l_mqtt.h"
 #include "common_data.h"
@@ -86,7 +87,7 @@ void dns_callback_function(const char *name, const ip_addr_t *ipaddr, void *arg)
 
     } else {
         dns_resolved = false;
-		IP4_ADDR(&dns_ip_iothub, 132, 220, 26, 9); // iot-hub-ox5bqwy7lpmfm.azure-devices.net
+		IP4_ADDR(&dns_ip_iothub, 40, 71, 14, 134); // iot-hub-ox5bqwy7lpmfm.azure-devices.net
         printf("DNS resolution failed for %s, statically set to %s", name, ipaddr_ntoa(&dns_ip_iothub));
     }
 }
@@ -341,40 +342,50 @@ int swiot1l_mqtt()
 	if (dns_resolved) {
 		// SNTP for Time
 		sntp_setoperatingmode(SNTP_OPMODE_POLL);
-		sntp_setservername(0, "ie.pool.ntp.org");
+		sntp_setservername(0, "pool.ntp.org");
 		printf("DNS resolution successful\n");
 		// Use the resolved IP address for the MQTT broker
 	} else {
 		// SNTP for Time
 		sntp_setoperatingmode(SNTP_OPMODE_POLL);
 		ip_addr_t ntp_server_ip;
-		IP4_ADDR(&ntp_server_ip, 162, 159, 200, 123); // ie.pool.ntp.org
+		IP4_ADDR(&ntp_server_ip, 45, 33, 53, 84); // pool.ntp.org
 		sntp_setserver(0, &ntp_server_ip);
-		printf("DNS resolution failed using fixed ip 162, 159, 200, 123\n");
+		printf("DNS resolution failed using fixed ip 45, 33, 53, 84\n");
 	}
 	// Initalise SNTP
 	sntp_init();
 	no_os_mdelay(2000);
 
-	char my_ca_cert[] = CA_CERT;
-	char my_cli_cert[] = DEVICE_CERT;
-	char my_cli_pk[] = DEVICE_PRIVATE_KEY;
+	// char my_ca_cert[] = CA_CERT;
+	// char my_cli_cert[] = DEVICE_CERT;
+	// char my_cli_pk[] = DEVICE_PRIVATE_KEY;
 
 	struct no_os_trng_init_param trng_ip = {
 		.platform_ops = &max_trng_ops
 	};
 
-	struct secure_init_param secure_params = {
+	// struct secure_init_param secure_params = {
+	// 	.trng_init_param = &trng_ip,
+	// 	.ca_cert = my_ca_cert,
+	// 	.ca_cert_len = NO_OS_ARRAY_SIZE(my_ca_cert),
+	// 	.cli_cert = my_cli_cert,
+	// 	.cli_cert_len = NO_OS_ARRAY_SIZE(my_cli_cert),
+	// 	.cli_pk = my_cli_pk,
+	// 	.cli_pk_len = NO_OS_ARRAY_SIZE(my_cli_pk),
+	// 	.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
+	// };
+
+		struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
-		.ca_cert = my_ca_cert,
-		.ca_cert_len = NO_OS_ARRAY_SIZE(my_ca_cert),
-		.cli_cert = my_cli_cert,
-		.cli_cert_len = NO_OS_ARRAY_SIZE(my_cli_cert),
-		.cli_pk = my_cli_pk,
-		.cli_pk_len = NO_OS_ARRAY_SIZE(my_cli_pk),
+		.ca_cert = NULL,
+		.ca_cert_len = 0,
+		.cli_cert = NULL,
+		.cli_cert_len = 0,
+		.cli_pk = NULL,
+		.cli_pk_len = 0, 
 		.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
 	};
-
 
 	tcp_ip.secure_init_param = &secure_params;
 
@@ -407,6 +418,18 @@ int swiot1l_mqtt()
 		goto free_socket;
 	}
 
+	ret = socket_connect(tcp_socket, &ip_addr);
+	if (ret) {
+		pr_err("Couldn't connect to the remote TCP socket: %d (%s)\n", ret,
+		       strerror(-ret));
+		goto free_mqtt;
+	}
+
+	while (connect_timeout--) {
+		no_os_lwip_step(tcp_socket->net->net, NULL);
+		no_os_mdelay(1);
+	}
+
 	ret = create_and_configure_mqtt_client_for_iot_hub();
 	if (ret != AZ_OK){
 		goto free_mqtt;
@@ -419,18 +442,6 @@ int swiot1l_mqtt()
 		.username = mqtt_hub_user_name,
 		.password = mqtt_hub_password
 	};
-
-	ret = socket_connect(tcp_socket, &ip_addr);
-	if (ret) {
-		pr_err("Couldn't connect to the remote TCP socket: %d (%s)\n", ret,
-		       strerror(-ret));
-		goto free_mqtt;
-	}
-
-	while (connect_timeout--) {
-		no_os_lwip_step(tcp_socket->net->net, NULL);
-		no_os_mdelay(1);
-	}
 
 	ret = mqtt_connect(mqtt, &conn_config, NULL);
 	if (ret) {
@@ -448,32 +459,32 @@ int swiot1l_mqtt()
 	while (1) {
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
-		// ad74413r_adc_get_value(ad74413r, 0, &val);
-		// memset(val_buff, 0, sizeof(val_buff));
-		// if (val.integer == 0 && val.decimal < 0)
-		// 	msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld", val.integer,
-		// 			   abs(val.decimal));
-		// else
-		// 	msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
-		// 			   abs(val.decimal));
-		// test_msg.len = msg_len;
-		// ret = mqtt_publish(mqtt, "ad74413r/channel0", &test_msg);
-		// if (ret) {
-		// 	pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-		// 	goto free_mqtt;
-		// }
+		ad74413r_adc_get_value(ad74413r, 0, &val);
+		memset(val_buff, 0, sizeof(val_buff));
+		if (val.integer == 0 && val.decimal < 0)
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel0: -%lld mV", val.integer,
+					   abs(val.decimal));
+		else
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel0:  %lld mV", val.integer,
+					   abs(val.decimal));
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		if (ret) {
+			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
+			goto free_mqtt;
+		}
 
 		ad74413r_adc_get_value(ad74413r, 1, &val);
 		memset(val_buff, 0, sizeof(val_buff));
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: -%lld mV",
 					   val.integer / 1000,
 					   abs(val.decimal));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld", val.integer,
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: %lld mV", val.integer,
 					   abs(val.decimal));
 		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, "azure_topic", &test_msg);
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		if (ret) {
 			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
 			goto free_mqtt;
@@ -481,11 +492,11 @@ int swiot1l_mqtt()
 
 		ad74413r_adc_get_value(ad74413r, 2, &val);
 		memset(val_buff, 0, sizeof(val_buff));
-		msg_len = snprintf(val_buff, sizeof(val_buff), "%lld",
+		msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel2: %lld Ω",
 				   val.integer / 1000,
 				   abs(val.decimal));
 		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, "azure_topic", &test_msg);
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		if (ret) {
 			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
 			goto free_mqtt;
@@ -495,15 +506,15 @@ int swiot1l_mqtt()
 		memset(val_buff, 0, sizeof(val_buff));
 
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "-%lld"".%02lu",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel3: -%lld"".%02lu mA",
 					   val.integer,
 					   abs(val.decimal / 1000000));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%lld"".%02lu",
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel3: %lld"".%02lu mA",
 					   val.integer,
 					   abs(val.decimal / 1000000));
 		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, "azure_topic", &test_msg);
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		if (ret) {
 			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
 			goto free_mqtt;
@@ -513,7 +524,7 @@ int swiot1l_mqtt()
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret)
 		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "%.03f", ((double)adt75_val / 1000));
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adt75/temperature: %.03f C", ((double)adt75_val / 1000));
 			// printf("Temperature Reading : %.03f C\n\r", ((double)adt75_val / 1000));
 		}
 		else
@@ -522,7 +533,7 @@ int swiot1l_mqtt()
 			// printf("No Valid temperature Data - %d\n\r", ret);
 		}
 		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, "azure_topic", &test_msg);
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 
 		no_os_mdelay(2000);
 	}

@@ -4,43 +4,43 @@
 #ifndef DISABLE_SECURE_SOCKET
 #define CA_CERT                                                             \
     "-----BEGIN CERTIFICATE-----\r\n"                                       \
-    "MIICfDCCAiGgAwIBAgIUL0wv7pFOXhrgRA2Ojcwo5KXFs6UwCgYIKoZIzj0EAwIw\r\n"  \
-    "gZIxCzAJBgNVBAYTAklFMRAwDgYDVQQIDAdNdW5zdGVyMREwDwYDVQQHDAhMaW1l\r\n"  \
-    "cmljazEMMAoGA1UECgwDQURJMREwDwYDVQQLDAhTZWN1cml0eTEWMBQGA1UEAwwN\r\n"  \
-    "MTkyLjE2OC4wLjEwMzElMCMGCSqGSIb3DQEJARYWc2FkaGJoLnJ5YW5AYW5hbG9n\r\n"  \
-    "LmNvbTAeFw0yNTA5MTkxMzQ0NDBaFw0zNTA5MTcxMzQ0NDBaMIGSMQswCQYDVQQG\r\n"  \
-    "EwJJRTEQMA4GA1UECAwHTXVuc3RlcjERMA8GA1UEBwwITGltZXJpY2sxDDAKBgNV\r\n"  \
-    "BAoMA0FESTERMA8GA1UECwwIU2VjdXJpdHkxFjAUBgNVBAMMDTE5Mi4xNjguMC4x\r\n"  \
-    "MDMxJTAjBgkqhkiG9w0BCQEWFnNhZGhiaC5yeWFuQGFuYWxvZy5jb20wWTATBgcq\r\n"  \
-    "hkjOPQIBBggqhkjOPQMBBwNCAATrk4LNopc/v2LwrvOj8dU4HQ41phLLqtIoivt7\r\n"  \
-    "ykZvsh7AEujFtrS1X1QS7pnyb2TIK17win2wgNw6wE55EA4Ao1MwUTAdBgNVHQ4E\r\n"  \
-    "FgQUapFI+iiRJK7aULq01yFKFPu/cxQwHwYDVR0jBBgwFoAUapFI+iiRJK7aULq0\r\n"  \
-    "1yFKFPu/cxQwDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNJADBGAiEAr89F\r\n"  \
-    "RYOHErV59iYkXtvVLDw5d3cDrjCCtT9EkcFiunkCIQCLttRU95BGtY2j9b3+BBJa\r\n"  \
-    "4MQjRSZY7s4dNUBdbgsoVw==\r\n"  \
+    "MIICeDCCAh+gAwIBAgIUKVNcR24VCzYSKb6sKQbNF75eOm0wCgYIKoZIzj0EAwIw\r\n"  \
+    "gZExCzAJBgNVBAYTAklFMRAwDgYDVQQIDAdtdW5zdGVyMREwDwYDVQQHDAhsaW1l\r\n"  \
+    "cmljazEMMAoGA1UECgwDYWRpMREwDwYDVQQLDAhzb2Z0d2FyZTEVMBMGA1UEAwwM\r\n"  \
+    "MTkyLjE2OC4wLjI5MSUwIwYJKoZIhvcNAQkBFhZzYWRoYmgucnlhbkBhbmFsb2cu\r\n"  \
+    "Y29tMB4XDTI2MDUwNjEzNTcxMFoXDTM2MDUwMzEzNTcxMFowgZExCzAJBgNVBAYT\r\n"  \
+    "AklFMRAwDgYDVQQIDAdtdW5zdGVyMREwDwYDVQQHDAhsaW1lcmljazEMMAoGA1UE\r\n"  \
+    "CgwDYWRpMREwDwYDVQQLDAhzb2Z0d2FyZTEVMBMGA1UEAwwMMTkyLjE2OC4wLjI5\r\n"  \
+    "MSUwIwYJKoZIhvcNAQkBFhZzYWRoYmgucnlhbkBhbmFsb2cuY29tMFkwEwYHKoZI\r\n"  \
+    "zj0CAQYIKoZIzj0DAQcDQgAEOBjfgFmE5Me1pQKsZtYkh7gP+coZC4ZPI89ghSz1\r\n"  \
+    "A/ooIRIcglVbM9JnC8nCF7HZHx4LRVN47vWJCloLbfA23qNTMFEwHQYDVR0OBBYE\r\n"  \
+    "FO+VzGC7W1YDzCzXhVMD3I5Aw+LVMB8GA1UdIwQYMBaAFO+VzGC7W1YDzCzXhVMD\r\n"  \
+    "3I5Aw+LVMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgBRCyRNMl\r\n"  \
+    "0VQmdGnvMMCLUH5P/5SsGUNxqQS8wVK0qYsCIDnNX4LZ9nY914AOUChDMrKHc1RF\r\n"  \
+    "z4rFdk0TUtMM88vg\r\n"                                                  \
     "-----END CERTIFICATE-----\r\n"
 
 #define DEVICE_CERT                                                         \
     "-----BEGIN CERTIFICATE-----\r\n"                                       \
-    "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\r\n"  \
+    "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\r\n"      \
     "-----END CERTIFICATE-----\r\n"
 
 #define DEVICE_PRIVATE_KEY                                                  \
     "-----BEGIN EC PRIVATE KEY-----\r\n"                                    \
-    "MHcCAQEEILKXXlAMD2yqPcpAAwC+mIZQQ6O9rdaVnB165Qmj9AI2oAoGCCqGSM49\r\n"  \
-    "AwEHoUQDQgAEPSSzM/sAqwLjAqXv+Eo0QfCr8YPtOPlAv20yu1ZpVNV9pgbgYtjC\r\n"  \
-    "b9gDJRTyNewPeQ9vh4D1tCBXWDtLvdFCKw==\r\n"  \
+    "MHcCAQEEINIo3DeOxy48IWm/IXUt3E7Z92MdLSm5jbghjeFfEN9QoAoGCCqGSM49\r\n"  \
+    "AwEHoUQDQgAEs+gwqDK18ikIDWRJoz9pNDZOtIwEH/HrP1XQYsyZFZgB15F98CaI\r\n"  \
+    "Oc+xBGBsISayyi/PwwOmcpeIN0/4T9u5Gw==\r\n"                              \
     "-----END EC PRIVATE KEY-----\r\n"
 #endif
