@@ -78,7 +78,7 @@ Building the project
 
 .. code-block:: bash
 
-    make EXAMPLE=<example> HP_STATIC_IP=<y/n> BOARD_REV=<HP_IS/HP_NON_IS> BOARD_REV=<PLAIN_CONNECTION/SECURE_CONNECTION> <RELEASE=y/n>
+    make EXAMPLE=<example> HP_STATIC_IP=<y/n> BOARD_REV=<HP_IS/HP_NON_IS> CONNECTION_TYPE=<PLAIN_CONNECTION/SECURE_CONNECTION> <RELEASE=y/n>
 
 Make Flags
 ^^^^^^^^^^

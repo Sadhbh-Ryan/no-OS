@@ -1,6 +1,8 @@
 CFLAGS += -DHP_MQTT_BAREMETAL
 
 LIBRARIES += lwip
+INCS += $(PROJECT)/src/common/sntp.h
+SRCS += $(PROJECT)/src/common/sntp.c
 
 CFLAGS += -DNO_OS_STATIC_IP
 CFLAGS += -DNO_OS_LWIP_NETWORKING
@@ -11,7 +13,7 @@ CFLAGS += -g -O0
 CFLAGS_MFLOAT_TYPE 	= softfp
 
 ifndef MQTT_SERVER_IP
-MQTT_SERVER_IP=192.168.0.226
+MQTT_SERVER_IP=iot-hub-236wtbntgkg4a.azure-devices.net
 endif
 
 # -------- Connection selection --------
@@ -33,6 +35,15 @@ CFLAGS += -DCONNECTION_TYPE=1
 ifndef MQTT_SERVER_PORT
 MQTT_SERVER_PORT=8883
 endif
+ifndef AZURE_DEVICE_ID
+AZURE_DEVICE_ID=ad-ethernetAPLdevice-sl
+endif
+ifndef AZURE_REQUEST_ID
+AZURE_REQUEST_ID= 1
+endif
+ifndef AZURE_DEVICE_PRIMARY_KEY
+AZURE_DEVICE_PRIMARY_KEY=1sA4e7sEaXDd1yT0SbQJO4zarU9nGfi13hSfYF2AJdU=
+endif
 # Include mbedtls configuration & certs
 INCS += $(PROJECT)/src/common/noos_mbedtls_config.h
 INCS +=$(PROJECT)/src/common/certs.h
@@ -42,6 +53,11 @@ endif
 
 CFLAGS += -DMQTT_SERVER_IP=\"$(MQTT_SERVER_IP)\"
 CFLAGS += -DMQTT_SERVER_PORT=$(MQTT_SERVER_PORT)
+CFLAGS += -DAZURE_DEVICE_ID=\"$(AZURE_DEVICE_ID)\"
+CFLAGS += -DAZURE_REQUEST_ID=\"$(AZURE_REQUEST_ID)\"
+CFLAGS += -DAZURE_DEVICE_PRIMARY_KEY=\"$(AZURE_DEVICE_PRIMARY_KEY)\"
+
+LIBRARIES += azure-sdk-for-c
 
 INCS += $(INCLUDE)/no_os_crc8.h
 INCS += $(DRIVERS)/net/adin1110/adin1110.h
