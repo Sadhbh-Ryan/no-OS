@@ -199,8 +199,8 @@ static void message_handler(struct mqtt_message_data *msg)
 int swiot1l_mqtt()
 {
 	uint8_t adin1110_mac_address[6] = {0x00, 0x18, 0x80, 0x03, 0x25, 0x60};
-	uint8_t send_buff[256];
-	uint8_t read_buff[256];
+	uint8_t send_buff[512];
+	uint8_t read_buff[512];
 	struct ad74413r_decimal val;
 	char val_buff[32];
 	uint32_t msg_len;
@@ -376,7 +376,7 @@ int swiot1l_mqtt()
 	// 	.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
 	// };
 
-		struct secure_init_param secure_params = {
+	struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
 		.ca_cert = NULL,
 		.ca_cert_len = 0,
@@ -386,7 +386,6 @@ int swiot1l_mqtt()
 		.cli_pk_len = 0, 
 		.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
 	};
-
 	tcp_ip.secure_init_param = &secure_params;
 
 	ret = socket_init(&tcp_socket, &tcp_ip);

@@ -15,18 +15,42 @@ ifeq (y,$(strip $(APARD32690_MQTT_EXAMPLE)))
 
 CFLAGS += -DAPARD32690_MQTT_EXAMPLE
 LIBRARIES += lwip
+INCS += $(PROJECT)/src/common/sntp.h
+SRCS += $(PROJECT)/src/common/sntp.c
+
 CFLAGS += -DNO_OS_STATIC_IP
 CFLAGS += -DNO_OS_LWIP_NETWORKING
-CFLAGS += -DDISABLE_SECURE_SOCKET
+CFLAGS += -DNO_OS_LWIP_INIT_ONETIME=1
+# CFLAGS += -DDISABLE_SECURE_SOCKET
+CFLAGS_MFLOAT_TYPE 	= softfp
 
-ifndef APARD32690_MQTT_SERVER_IP
-APARD32690_MQTT_SERVER_IP=192.168.0.226
+ifndef MQTT_SERVER_IP
+MQTT_SERVER_IP=iot-hub-236wtbntgkg4a.azure-devices.net
 endif
-ifndef APARD32690_MQTT_SERVER_PORT
-APARD32690_MQTT_SERVER_PORT=1883
+
+ifndef MQTT_SERVER_PORT
+MQTT_SERVER_PORT=8883
 endif
-CFLAGS += -DAPARD32690_MQTT_SERVER_IP=\"$(APARD32690_MQTT_SERVER_IP)\"
-CFLAGS += -DAPARD32690_MQTT_SERVER_PORT=$(APARD32690_MQTT_SERVER_PORT)
+
+ifndef AZURE_DEVICE_ID
+AZURE_DEVICE_ID=APARD32690
+endif
+
+ifndef AZURE_REQUEST_ID
+AZURE_REQUEST_ID= 1
+endif
+
+ifndef AZURE_DEVICE_PRIMARY_KEY
+AZURE_DEVICE_PRIMARY_KEY=gB+9ZZFsqM82ljRzfSXhediKrKBPfTV5TvTUJi7t/YI=
+endif
+
+CFLAGS += -DMQTT_SERVER_IP=\"$(MQTT_SERVER_IP)\"
+CFLAGS += -DMQTT_SERVER_PORT=$(MQTT_SERVER_PORT)
+CFLAGS += -DAZURE_DEVICE_ID=\"$(AZURE_DEVICE_ID)\"
+CFLAGS += -DAZURE_REQUEST_ID=\"$(AZURE_REQUEST_ID)\"
+CFLAGS += -DAZURE_DEVICE_PRIMARY_KEY=\"$(AZURE_DEVICE_PRIMARY_KEY)\"
+
+LIBRARIES += azure-sdk-for-c
 
 INCS += $(INCLUDE)/no_os_crc8.h
 INCS += $(DRIVERS)/net/adin1110/adin1110.h
@@ -43,11 +67,10 @@ INCS += $(NO-OS)/network/noos_mbedtls_config.h
 INCS += $(NO-OS)/network/network_interface.h
 SRCS += $(NO-OS)/network/tcp_socket.c
 
-# MBED_TLS_CONFIG_FILE = $(PROJECT)/src/examples/secure_mqtt_example_baremetal/noos_mbedtls_config.h
-
-# LIBRARIES += mbedtls
-# INCS += $(NO-OS)/libraries/mbedtls/include/mbedtls/ssl.h
-# SRC_DIRS += $(NO-OS)/libraries/mbedtls/library
+LIBRARIES += mbedtls
+INCS += $(NO-OS)/libraries/mbedtls/include/mbedtls/ssl.h
+MBED_TLS_CONFIG_FILE = $(PROJECT)/src/examples/mqtt_example/noos_mbedtls_config.h
+SRC_DIRS += $(NO-OS)/libraries/mbedtls/library
 
 LIBRARIES += mqtt
 
