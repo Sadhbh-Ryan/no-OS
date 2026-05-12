@@ -320,7 +320,7 @@ int mqtt_example_main()
 	// };
 	// tcp_ip.secure_init_param = &secure_params;
 
-		struct secure_init_param secure_params = {
+	struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
 		.ca_cert = NULL,
 		.ca_cert_len = 0,
