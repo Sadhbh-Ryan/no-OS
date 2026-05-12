@@ -436,7 +436,7 @@ int swiot1l_mqtt()
 
 	struct mqtt_connect_config conn_config = {
 		.version = MQTT_VERSION_3_1_1,
-		.keep_alive_ms = 2000,
+		.keep_alive_ms = 60000,
 		.client_name = mqtt_hub_client_id,
 		.username = mqtt_hub_user_name,
 		.password = mqtt_hub_password
