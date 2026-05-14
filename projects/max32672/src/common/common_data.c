@@ -65,7 +65,6 @@ struct no_os_uart_init_param uart_ip = {
 const struct max_spi_init_param adin1110_spi_extra = {
 	.num_slaves = 1,
 	.polarity = SPI_SS_POL_LOW,
-	.vssel = MXC_GPIO_VSSEL_VDDIO,
 };
 
 const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
