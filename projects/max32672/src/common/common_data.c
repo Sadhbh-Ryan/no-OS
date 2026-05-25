@@ -70,17 +70,6 @@ const struct max_spi_init_param adin1110_spi_extra = {
 const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
 	.port = 0,
 	.number = 19,
-	.pull = NO_OS_PULL_NONE,
-	.platform_ops = &max_gpio_ops,
-	.extra = &(struct max_gpio_init_param)
-	{
-		.vssel = 1
-	},
-};
-
-const struct no_os_gpio_init_param adin1110_int_gpio_ip = {
-	.port = 0,
-	.number = 18,
 	.pull = NO_OS_PULL_UP,
 	.platform_ops = &max_gpio_ops,
 	.extra = &(struct max_gpio_init_param)
@@ -91,7 +80,7 @@ const struct no_os_gpio_init_param adin1110_int_gpio_ip = {
 
 const struct no_os_spi_init_param adin1110_spi_ip = {
 	.device_id = 1,
-	.max_speed_hz = 20000000, //25000000,
+	.max_speed_hz = 15000000, //25000000,
 	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
 	.mode = NO_OS_SPI_MODE_0,
 	.platform_ops = &max_spi_ops,
@@ -103,13 +92,11 @@ struct adin1110_init_param adin1110_ip = {
 	.chip_type = ADIN1110,
 	.comm_param = adin1110_spi_ip,
 	.reset_param = adin1110_rst_gpio_ip,
-	.int_param = adin1110_int_gpio_ip,
 	.mac_address = {0x00, 0x18, 0x80, 0x03, 0x25, 0x80},
 	.append_crc = false,
 	.oa_tc6_spi = true,
-	.oa_tc6_prote = false,
+	.oa_tc6_prote = true,
 };
-
 #endif
 
 #if defined(APARD32690_PING_EXAMPLE)
