@@ -1,4 +1,4 @@
-AD-APARD32690-SL no-OS Example Project
+MAX32672EVkit no-OS Example Project
 ======================================
 
 .. no-os-doxygen::
@@ -15,22 +15,11 @@ Building the project
 
 The project includes 2 different examples:
 
-1. basic_example - may be selected by setting the APARD32690_BASIC_EXAMPLE = y (and all the other examples to n) in the main Makefile.
-This example is meant to print "Hello world" over UART0. Make sure to have jumpers in the position 2-3 on headers P50 and P55.
+1. basic_example - may be selected by setting the MAX32672_BASIC_EXAMPLE = y (and all the other examples to n) in the main Makefile.
+This example is meant to print "Hello world" over UART0. 
 
-2. tcp_echo_server (selected by default) - may be selected by setting the APARD32690_ECHO_SERVER_EXAMPLE = y (and all the other examples to n) in the main Makefile.
-This will start a TCP server using the interface ADIN1110 is connected to (the default settings are IP: 192.168.97.40 port: 10000). It will reply back to the connected client with the
-characters it receives. The actual IP address, netmask, and gateway used at runtime are printed on the serial port connected through the debug adapter.
-
-The host running the client may require network settings in order to communicate with a device using the 192.168.97.40 IP. These usually include manually adding a static IP for the host's network interface. You may go though the following guide on how to do this: https://wiki.analog.com/resources/no-os/misc_guides/static_ip_setting?rev=1715173602 (choose an IP in the 192.168.97.x/24 range that's different from the board's address).
-
-The project may be tested by using netcat on the host:
-
-.. code-block:: bash
-
-	netcat 192.168.97.40 10000
-
-#. Open a terminal and navigate to this project directory (if building on Windows, `Git Bash` has to be used).
+2. ping_example (selected by default) - may be selected by setting the MAX32672_PING_EXAMPLE = y (and all the other examples to n) in the main Makefile.
+When the code is running, the board will be pingable using the configured ip address of the board. 
 
 #. Type `make RELEASE=y -j`, in order to build the project. The `RELEASE` flag adds `-O2` optimization. It should be omitted during debugging.
 
@@ -38,12 +27,12 @@ A successful build should end with the following terminal output:
 
 .. code-block:: bash
 
-	[11:11:27] [HEX] apard32690.hex
-	[11:11:27] apard32690.hex is ready
-	rm /home/xvr/MaximSDK_new/Libraries/CMSIS/Device/Maxim/MAX32690/Source/GCC/startup_max32690.s
-	[11:11:21] Done (build/apard32690.elf)
+	[11:11:27] [HEX] max32672.hex
+	[11:11:27] max32672.hex is ready
+	rm /home/xvr/MaximSDK_new/Libraries/CMSIS/Device/Maxim/MAX32672/Source/GCC/startup_max32672.s
+	[11:11:21] Done (build/max32672.elf)
 
-The binary and executable files are now available in the `build` directory (`apard32690.hex` and `apard32690.elf` files).
+The binary and executable files are now available in the `build` directory (`max32672.hex` and `max32672.elf` files).
 
 Programming the MCU
 -------------------
