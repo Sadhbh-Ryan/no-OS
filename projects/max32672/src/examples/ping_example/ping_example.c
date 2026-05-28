@@ -45,6 +45,24 @@
 #include "lwip_adin1110.h"
 #include "network_interface.h"
 #include "no_os_delay.h"
+#include "no_os_init.h"
+
+void HardFault_Handler(void) {
+	// Optionally collect fault information
+     volatile uint32_t *hardfault_address = (uint32_t *)0xE000ED2C; // HFSR address
+     volatile uint32_t hfsr = *hardfault_address;
+
+     // Similarly, read the CFSR which is at 0xE000ED28
+     volatile uint32_t cfsr = *(volatile uint32_t *)0xE000ED28;
+     // Read MMFAR and BFAR if needed
+     volatile uint32_t mmfar = *(volatile uint32_t *)0xE000ED34;
+     volatile uint32_t bfar  = *(volatile uint32_t *)0xE000ED38;
+
+    // Now invoke a breakpoint for the debugger to catch
+    __asm("BKPT #01");
+
+     while (1); // Stay here so you can inspect via debugger
+}
 
 /***************************************************************************//**
  * @brief TCP echo example main execution.
@@ -56,6 +74,7 @@ int ping_example_main(){
 
 	struct no_os_uart_desc *uart_desc;
 	struct lwip_network_desc *lwip_desc;
+	struct no_os_gpio_desc *adin1110_reset_gpio;
 
 	uint8_t adin1110_mac_address[6] = {0x00, 0xe0, 0x22, 0x03, 0x25, 0x60};
 
@@ -83,7 +102,6 @@ int ping_example_main(){
 	
 	while (1) {
 		no_os_lwip_step(lwip_desc, NULL);
-		no_os_mdelay(200);
 	}
 
 	return 0;

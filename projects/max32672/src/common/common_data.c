@@ -70,7 +70,7 @@ const struct max_spi_init_param adin1110_spi_extra = {
 const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
 	.port = 0,
 	.number = 19,
-	.pull = NO_OS_PULL_UP,
+	.pull = NO_OS_PULL_NONE,
 	.platform_ops = &max_gpio_ops,
 	.extra = &(struct max_gpio_init_param)
 	{
@@ -80,7 +80,7 @@ const struct no_os_gpio_init_param adin1110_rst_gpio_ip = {
 
 const struct no_os_spi_init_param adin1110_spi_ip = {
 	.device_id = 1,
-	.max_speed_hz = 15000000, //25000000,
+	.max_speed_hz = 25000000,
 	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
 	.mode = NO_OS_SPI_MODE_0,
 	.platform_ops = &max_spi_ops,
