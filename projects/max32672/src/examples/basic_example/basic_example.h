@@ -1,7 +1,7 @@
 /***************************************************************************//**
  *   @file   basic_example.h
  *   @brief  Header for the basic example
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *

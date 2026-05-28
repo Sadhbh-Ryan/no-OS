@@ -1,7 +1,7 @@
 /***************************************************************************//**
  *   @file   main.c
- *   @brief  Main file for the apard32690 project.
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @brief  Main file for the max32672 project.
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -33,9 +33,9 @@
 #include "common_data.h"
 #include "no_os_init.h"
 
-#if defined(APARD32690_BASIC_EXAMPLE)
+#if defined(BASIC_EXAMPLE)
 #include "basic_example.h"
-#elif defined(APARD32690_PING_EXAMPLE)
+#elif defined(PING_EXAMPLE)
 #include "ping_example.h"
 #endif
 
@@ -46,9 +46,9 @@
 *******************************************************************************/
 int main()
 {
-#if defined(APARD32690_BASIC_EXAMPLE)
+#if defined(BASIC_EXAMPLE)
 	return basic_example_main();
-#elif defined(APARD32690_PING_EXAMPLE)
+#elif defined(PING_EXAMPLE)
 	return ping_example_main();
 #endif
 

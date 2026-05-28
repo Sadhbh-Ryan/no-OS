@@ -1,7 +1,7 @@
 /***************************************************************************//**
  *   @file   common_data.c
  *   @brief  Defines data common to all examples.
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -35,11 +35,11 @@
 #include "maxim_gpio.h"
 #include "maxim_spi.h"
 
-#if defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
-#include "adin1110.h"
-#endif
+// #if defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
+// #include "adin1110.h"
+// #endif
 
-#if defined(APARD32690_PING_EXAMPLE)
+#if defined(PING_EXAMPLE)
 #include "adin1110.h"
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
@@ -60,7 +60,7 @@ struct no_os_uart_init_param uart_ip = {
 	.platform_ops = &max_uart_ops,
 };
 
-#if defined(APARD32690_PING_EXAMPLE) || defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)
+#if defined(PING_EXAMPLE) 
 
 const struct max_spi_init_param adin1110_spi_extra = {
 	.num_slaves = 1,
@@ -99,7 +99,7 @@ struct adin1110_init_param adin1110_ip = {
 };
 #endif
 
-#if defined(APARD32690_PING_EXAMPLE)
+#if defined(PING_EXAMPLE)
 
 struct lwip_network_param lwip_ip = {
 	.platform_ops = &adin1110_lwip_ops,

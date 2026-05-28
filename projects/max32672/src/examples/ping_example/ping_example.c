@@ -1,7 +1,7 @@
 /***************************************************************************//**
- *   @file   tcp_echo_server_example.c
- *   @brief  Implementation of the TCP echo server example.
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @file   ping_example.c
+ *   @brief  Implementation of the ping example.
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *
@@ -45,24 +45,6 @@
 #include "lwip_adin1110.h"
 #include "network_interface.h"
 #include "no_os_delay.h"
-#include "no_os_init.h"
-
-void HardFault_Handler(void) {
-	// Optionally collect fault information
-     volatile uint32_t *hardfault_address = (uint32_t *)0xE000ED2C; // HFSR address
-     volatile uint32_t hfsr = *hardfault_address;
-
-     // Similarly, read the CFSR which is at 0xE000ED28
-     volatile uint32_t cfsr = *(volatile uint32_t *)0xE000ED28;
-     // Read MMFAR and BFAR if needed
-     volatile uint32_t mmfar = *(volatile uint32_t *)0xE000ED34;
-     volatile uint32_t bfar  = *(volatile uint32_t *)0xE000ED38;
-
-    // Now invoke a breakpoint for the debugger to catch
-    __asm("BKPT #01");
-
-     while (1); // Stay here so you can inspect via debugger
-}
 
 /***************************************************************************//**
  * @brief TCP echo example main execution.

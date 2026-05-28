@@ -1,7 +1,7 @@
 /***************************************************************************//**
- *   @file   tcp_echo_server_example.h
- *   @brief  Header for the TCP echo server example
- *   @author Ciprian Regus (ciprian.regus@analog.com)
+ *   @file   ping_example.h
+ *   @brief  Header for the ping example
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
  * Copyright 2023(c) Analog Devices, Inc.
  *

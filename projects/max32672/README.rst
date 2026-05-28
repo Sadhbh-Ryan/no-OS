@@ -10,15 +10,35 @@ Prior to building the project, a couple steps are necessary in order to get the 
 
 The MaximSDK provides distributions of `arm-none-eabi-` GCC compiler + utilities and `OpenOCD`, so you don't have to install these separately.
 
+-------------
+For the ping example - MAX32672EVkit + ADIN1110EBZ Pin configuration
+
+.. table::
+
+   ======================== =================== =======================
+   SPI Pinout               Max32672EVkit       ADIN1110EBZ (external host/uC)
+   ======================== =================== =======================
+   CS                       AIN9                T1L_CS_N
+   GND                      GND                 GND
+   MISO                     AIN6                T1L_MISO
+   MOSI                     AIN7                T1L_MOSI
+   PWR                      V_AUX               VDDIO
+   RESET                    AIN11               RESET_N
+   SCLK                     AIN8                T1L_SCLK
+   ======================== =================== =======================
+
+Note: When using ADIN1110 with an external host/uC place the local uC in reset by jumper J301 in GND position
+--------------------
+
 Building the project
 --------------------
 
 The project includes 2 different examples:
 
-1. basic_example - may be selected by setting the MAX32672_BASIC_EXAMPLE = y (and all the other examples to n) in the main Makefile.
+1. basic_example - may be selected by setting the BASIC_EXAMPLE = y (and all the other examples to n) in the main Makefile.
 This example is meant to print "Hello world" over UART0. 
 
-2. ping_example (selected by default) - may be selected by setting the MAX32672_PING_EXAMPLE = y (and all the other examples to n) in the main Makefile.
+2. ping_example - may be selected by setting the PING_EXAMPLE = y (and all the other examples to n) in the main Makefile.
 When the code is running, the board will be pingable using the configured ip address of the board. 
 
 #. Type `make RELEASE=y -j`, in order to build the project. The `RELEASE` flag adds `-O2` optimization. It should be omitted during debugging.
@@ -51,9 +71,9 @@ Before the MCU can be programmed a few steps are necessary:
 
     * Copy the firmware binary file to the `MAINTANANCE` drive. It should unmount and a `DAPLINK` drive should appear instead.
 
-#. Connect the MAX32625PICO board to the PC and the APARD32690 board. If everything went well, you should see a mass storage device named `DAPLINK` in your filesystem.
+#. Connect the MAX32625PICO board to the PC and the max32672EVkit board. If everything went well, you should see a mass storage device named `DAPLINK` in your filesystem.
 
-#. Power on the APARD32690 board.
+#. Power on the max32672EVkit board.
 
 The microcontroller may be programmed in 2 ways:
 1. Drag-and-drop the binary (.hex) file in the `DAPLINK` directory. The drive should be unmounted and mounted again, once the programming is done.
