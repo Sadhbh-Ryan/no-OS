@@ -152,8 +152,7 @@ typedef struct {
  *
  * @return 0 - on success, different from 0 otherwise
  */
-int pqm_one_cycle(void);
-
+int pqm_one_cycle(void *);
 /**
  * @brief Prints error message for errors from the library. Serves
  * as an examples on how to handle the errors from the library.

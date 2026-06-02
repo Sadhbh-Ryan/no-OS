@@ -6,6 +6,9 @@ IIOD=y
 HEAP_SIZE=0x80000
 STACK_SIZE=0x20000
 
+PLATFORM = maxim
+TARGET = max32650
+
 ifeq ($(INTERFACE), usb)
 $(info Using USB as interface for IIO communication)
 CFLAGS += -DPQM_CONN_USB

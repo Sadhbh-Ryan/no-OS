@@ -39,7 +39,6 @@
 #include "no_os_alloc.h"
 #include "no_os_trng.h"
 #include "no_os_delay.h"
-#include "mbedtls/debug.h"
 
 #ifdef NO_OS_LWIP_NETWORKING
 #include "lwip_socket.h"
@@ -47,6 +46,7 @@
 
 #ifndef DISABLE_SECURE_SOCKET
 #include "noos_mbedtls_config.h"
+#include "mbedtls/debug.h"
 #endif /* DISABLE_SECURE_SOCKET */
 
 #ifdef DISABLE_SECURE_SOCKET
