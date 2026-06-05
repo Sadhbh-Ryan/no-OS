@@ -37,6 +37,9 @@
 #include <time.h>
 
 #include "swiot1l_mqtt.h"
+#include "iio_ad74413r.h"
+#include "iio_max14906.h"
+#include "swiot.h"
 #include "common_data.h"
 #include "no_os_util.h"
 #include "no_os_gpio.h"
@@ -100,7 +103,7 @@ int create_and_configure_mqtt_client_for_iot_hub(void){
 	az_span my_device_id = AZ_SPAN_LITERAL_FROM_STR(AZURE_DEVICE_ID);
 	az_span my_request_id = AZ_SPAN_LITERAL_FROM_STR(AZURE_REQUEST_ID);
 
-	printf("Current UNIX time, %u\n", sntp_unix_sec);
+	// printf("Current UNIX time, %u\n", sntp_unix_sec);
     uint64_t expiration_time_epoch = sntp_unix_sec + 3600;  // Set the expiry time to 1 hour
 
 	uint8_t signature_buffer[256]; // Ensure this is large enough to store the signature
@@ -134,9 +137,9 @@ int create_and_configure_mqtt_client_for_iot_hub(void){
 	if (result != AZ_OK) {
 		return result;
 	} 
-	else {
-		printf("mqtt hub username: %s\n", mqtt_hub_user_name);
-	}
+	// else {
+	// 	printf("mqtt hub username: %s\n", mqtt_hub_user_name);
+	// }
 
 	// Get signature in string to sign format
 	result = az_iot_hub_client_sas_get_signature(&my_client, expiration_time_epoch, signature_span, &out_signature_span);
@@ -182,9 +185,9 @@ int create_and_configure_mqtt_client_for_iot_hub(void){
 	if (result != AZ_OK){
 		return result;
 	} 
-	else {
-		printf("SAS Token: %s\n", mqtt_hub_password);
-	}
+	// else {
+		// printf("SAS Token: %s\n", mqtt_hub_password);
+	// }
 
 	// Allow data ro be published to azure IoT hub
 	return az_iot_hub_client_properties_get_reported_publish_topic(&my_client, my_request_id, reported_topic, sizeof(reported_topic), NULL);
@@ -212,6 +215,8 @@ int swiot1l_mqtt()
 
 	struct adt75_desc* adt75;
 	struct ad74413r_desc *ad74413r;
+	struct adxl355_dev* adxl355_desc;
+
 	struct lwip_network_param lwip_ip = {
 		.platform_ops = &adin1110_lwip_ops,
 		.mac_param = &adin1110_ip,
@@ -227,8 +232,18 @@ int swiot1l_mqtt()
 	};
 	uint32_t connect_timeout = 5000;
 
+	// ADXL355  Variables 
+	struct adxl355_frac_repr x[32] = { 0 };
+	struct adxl355_frac_repr y[32] = { 0 };
+	struct adxl355_frac_repr z[32] = { 0 };
+	struct adxl355_frac_repr temp;
+	union adxl355_sts_reg_flags status_flags = { 0 };
+	uint8_t fifo_entries = 0;
+
+	// GPIO Configuration 
+
 	struct no_os_gpio_desc *ad74413r_ldac_gpio;
-	struct no_os_gpio_desc *ad74413r_reset_gpio;
+	// struct no_os_gpio_desc *ad74413r_reset_gpio;
 	struct no_os_gpio_desc *ad74413r_irq_gpio;
 	struct no_os_gpio_desc *max14906_en_gpio;
 	struct no_os_gpio_desc *max14906_d1_gpio;
@@ -259,7 +274,7 @@ int swiot1l_mqtt()
 	no_os_gpio_direction_output(max14906_en_gpio, 0);
 	no_os_gpio_get(&adin1110_cfg0_gpio, &adin1110_cfg0_ip);
 	no_os_gpio_get(&ad74413r_ldac_gpio, &ad74413r_ldac_ip);
-	no_os_gpio_get(&ad74413r_reset_gpio, &ad74413r_reset_ip);
+	// no_os_gpio_get(&ad74413r_reset_gpio, &ad74413r_reset_ip);
 	no_os_gpio_get(&ad74413r_irq_gpio, &ad74413r_irq_ip);
 	no_os_gpio_get(&max14906_synch_gpio, &max14906_synch_ip);
 	no_os_gpio_get(&adin1110_swpd_gpio, &adin1110_swpd_ip);
@@ -268,7 +283,7 @@ int swiot1l_mqtt()
 	no_os_gpio_get(&adin1110_cfg1_gpio, &adin1110_cfg1_ip);
 	no_os_gpio_get(&adin1110_int_gpio, &adin1110_int_ip);
 	no_os_gpio_direction_output(ad74413r_ldac_gpio, 0);
-	no_os_gpio_direction_output(ad74413r_reset_gpio, 1);
+	// no_os_gpio_direction_output(ad74413r_reset_gpio, 1);
 	no_os_gpio_direction_output(max14906_synch_gpio, 1);
 	no_os_gpio_direction_output(adin1110_swpd_gpio, 1);
 	no_os_gpio_direction_output(adin1110_tx2p4_gpio, 0);
@@ -280,22 +295,72 @@ int swiot1l_mqtt()
 	no_os_gpio_direction_input(adin1110_int_gpio);
 	no_os_gpio_direction_input(ad74413r_irq_gpio);
 
+	const mxc_gpio_cfg_t gpio_cfg = { MXC_GPIO1, (MXC_GPIO_PIN_24), MXC_GPIO_FUNC_OUT,
+                                           MXC_GPIO_PAD_NONE, MXC_GPIO_VSSEL_VDDIOH, MXC_GPIO_DRVSTR_3 };
+	MXC_GPIO_Init(1);
+	MXC_GPIO_Config(&gpio_cfg);
+
+	printf("Initialising AD74413r Chip\n");
 	ret = ad74413r_init(&ad74413r, &ad74413r_ip);
 	if (ret)
+	{
+		printf("AD74413r Init Error\n"); 
 		goto free_gpio;
+	}
 
-	ad74413r_set_channel_function(ad74413r, 0, AD74413R_VOLTAGE_IN);
-	ad74413r_set_channel_function(ad74413r, 1, AD74413R_CURRENT_OUT);
-	ad74413r_set_channel_function(ad74413r, 2, AD74413R_RESISTANCE);
-	ad74413r_set_channel_function(ad74413r, 3, AD74413R_VOLTAGE_OUT);
+	// Setup connection to the ADXL Part 
+	adxl355_ip.comm_init.spi_init = adxl355_spi_ip;
 
-	ad74413r_set_adc_rejection(ad74413r, 0, AD74413R_REJECTION_NONE);
+	ret = adxl355_init(&adxl355_desc, adxl355_ip);
+	if (ret)
+	{
+		printf("Failed to Initialise ADXL355 - %d\n\r", ret);
+		return ret;
+	}
+	ret = adxl355_soft_reset(adxl355_desc);
+	if (ret)
+	{
+		printf("Failed to Soft Reset ADXL355 - %d\n\r", ret);
+		return ret;
+	}
+	ret = adxl355_set_odr_lpf(adxl355_desc, ADXL355_ODR_3_906HZ);
+	if (ret)
+	{
+		printf("Failed to Initialise ADXL355 Filter - %d\n\r", ret);
+		return ret;
+	}
+	ret = adxl355_set_op_mode(adxl355_desc, ADXL355_MEAS_TEMP_ON_DRDY_OFF);
+	if (ret)
+	{
+		printf("Failed to Set Mode ADXL355 - %d\n\r", ret);
+		return ret;
+	}
+
+	printf("ADXL355 Sensor Initialised\n\r"); 
+
+	ad74413r_set_channel_function(ad74413r, 0, AD74413R_VOLTAGE_OUT);
+	ad74413r_set_channel_function(ad74413r, 1, AD74413R_VOLTAGE_IN);
+	ad74413r_set_channel_function(ad74413r, 2, AD74413R_VOLTAGE_IN);
+	ad74413r_set_channel_function(ad74413r, 3, AD74413R_VOLTAGE_IN);
+
+	//ad74413r_set_adc_rejection(ad74413r, 0, AD74413R_REJECTION_NONE);
 	ad74413r_set_adc_rejection(ad74413r, 1, AD74413R_REJECTION_NONE);
 	ad74413r_set_adc_rejection(ad74413r, 2, AD74413R_REJECTION_NONE);
 	ad74413r_set_adc_rejection(ad74413r, 3, AD74413R_REJECTION_NONE);
 
-	ad74413r_set_channel_dac_code(ad74413r, 1, 1000);
-	ad74413r_set_channel_dac_code(ad74413r, 3, 3000);
+	// ad74413r_set_channel_dac_code(ad74413r, 1, 1000);
+	uint32_t uDacCode = 0; 
+	ret = ad74413r_dac_voltage_to_code(5000, &uDacCode); 
+	if (ret)
+	{
+		printf("Failed to setup supply for ADXL1002Z\n\r");
+		return ret;
+	}
+	else
+		// printf("Supply Voltage set to DacCode - %d\n\r", uDacCode);
+
+	ad74413r_set_channel_dac_code(ad74413r, 0, uDacCode);
+	// ad74413r_set_channel_dac_code(ad74413r, 3, 3000);
 
 	ret = adt75_init(&adt75, &adt75_ip);
 	if (ret)
@@ -458,67 +523,20 @@ int swiot1l_mqtt()
 	while (1) {
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
-		ad74413r_adc_get_value(ad74413r, 0, &val);
-		memset(val_buff, 0, sizeof(val_buff));
-		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel0: -%lld mV", val.integer,
-					   abs(val.decimal));
-		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel0:  %lld mV", val.integer,
-					   abs(val.decimal));
-		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		if (ret) {
-			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-			goto free_mqtt;
-		}
-
-		ad74413r_adc_get_value(ad74413r, 1, &val);
-		memset(val_buff, 0, sizeof(val_buff));
-		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: -%lld mV",
-					   val.integer / 1000,
-					   abs(val.decimal));
-		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: %lld mV", val.integer,
-					   abs(val.decimal));
-		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		if (ret) {
-			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-			goto free_mqtt;
-		}
-
+		//Vibration sensor - AD74413r
 		ad74413r_adc_get_value(ad74413r, 2, &val);
 		memset(val_buff, 0, sizeof(val_buff));
-		msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel2: %lld Ω",
-				   val.integer / 1000,
-				   abs(val.decimal));
-		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		if (ret) {
-			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-			goto free_mqtt;
-		}
-
-		ad74413r_adc_get_value(ad74413r, 3, &val);
-		memset(val_buff, 0, sizeof(val_buff));
-
 		if (val.integer == 0 && val.decimal < 0)
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel3: -%lld"".%02lu mA",
-					   val.integer,
-					   abs(val.decimal / 1000000));
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: -%lld mv", val.integer, abs(val.decimal));
 		else
-			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel3: %lld"".%02lu mA",
-					   val.integer,
-					   abs(val.decimal / 1000000));
+			msg_len = snprintf(val_buff, sizeof(val_buff), "ad74413r/channel1: %lld mv", val.integer, abs(val.decimal));
 		test_msg.len = msg_len;
+		// printf("ad74413r/channel0: %lld mv\n", val.integer);
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		if (ret) {
-			pr_err("Error publishing MQTT message: %d (%s)\n", ret, strerror(-ret));
-			goto free_mqtt;
-		}
+		if (ret)
+			return ret;
 
+		// Temperature Sensor - ADT75
 		ret = adt75_get_single_temp(adt75, &adt75_val);
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret)
@@ -531,6 +549,116 @@ int swiot1l_mqtt()
 			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
 			// printf("No Valid temperature Data - %d\n\r", ret);
 		}
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+
+		// Accelerometer Sensor - ADXL355
+		printf("Single read\n");
+		ret = adxl355_get_xyz(adxl355_desc, &x[0], &y[0], &z[0]);
+
+		int bReadSucc = 0;
+
+		if (ret)
+		{
+			printf("Failed to read - %d\n\r", ret);
+		}
+		else
+		{
+			bReadSucc = 1; 
+			printf(" x=%d"".%09u", (int)x[0].integer, (abs)(x[0].fractional));
+			printf(" y=%d"".%09u", (int)y[0].integer, (abs)(y[0].fractional));
+			printf(" z=%d"".%09u \n\r", (int)z[0].integer, (abs)(z[0].fractional));
+		}
+
+		ret = adxl355_get_fifo_data(adxl355_desc,
+			&fifo_entries,
+			&x[0],
+			&y[0],
+			&z[0]);
+		if (ret)
+			printf("Failed to read - %d\n\r", ret);
+		else
+		{
+			printf("Number of read entries from the FIFO %d \n\r", fifo_entries);
+			printf("Number of read data sets from the FIFO %d \n\r", fifo_entries / 3);
+			for (uint8_t idx = 0; idx < 32; idx++) {
+				if (idx < fifo_entries / 3) {
+					printf(" x=%d"".%09u m/s^2", (int)x[idx].integer, (abs)(x[idx].fractional));
+					printf(" y=%d"".%09u m/s^2", (int)y[idx].integer, (abs)(y[idx].fractional));
+					printf(" z=%d"".%09u m/s^2", (int)z[idx].integer, (abs)(z[idx].fractional));
+					printf("\n\r");
+				}
+			}
+
+			printf("==========================================================\n\r");
+		}
+		ret = adxl355_get_sts_reg(adxl355_desc, &status_flags);
+		if (ret)
+			printf("Failed to read - %d\n\r", ret);
+		else
+		{
+			printf("Activity flag = %d \n\r", (uint8_t)(status_flags.fields.Activity));
+			printf("DATA_RDY flag = %d \n\r", (uint8_t)(status_flags.fields.DATA_RDY));
+			printf("FIFO_FULL flag = %d \n\r", (uint8_t)(status_flags.fields.FIFO_FULL));
+			printf("FIFO_OVR flag = %d \n\r", (uint8_t)(status_flags.fields.FIFO_OVR));
+			printf("NVM_BUSY flag = %d \n\r", (uint8_t)(status_flags.fields.NVM_BUSY));
+			printf("===========================================================\n\r");
+		}
+
+		ret = adxl355_get_temp(adxl355_desc, &temp);
+		if (ret)
+			printf("Failed to read - %d\n\r", ret);
+		else
+		{
+			printf(" Temp =%d"".%09u millidegress Celsius \n\r", (int)temp.integer,
+				(abs)(temp.fractional));
+		}
+
+		// MQTT Publish x y z 
+
+		memset(val_buff, 0, sizeof(val_buff));
+
+		if (!bReadSucc)
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+		}
+		else
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
+		}
+
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+
+		no_os_mdelay(100);
+
+		memset(val_buff, 0, sizeof(val_buff));
+
+		if (!bReadSucc)
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+		}
+		else
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
+		}
+
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+
+		no_os_mdelay(100);
+
+		memset(val_buff, 0, sizeof(val_buff));
+
+		if (!bReadSucc)
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+		}
+		else
+		{
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
+		}
+
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 
@@ -555,7 +683,7 @@ free_gpio:
 	no_os_gpio_remove(adin1110_swpd_gpio);
 	no_os_gpio_remove(max14906_synch_gpio);
 	no_os_gpio_remove(ad74413r_irq_gpio);
-	no_os_gpio_remove(ad74413r_reset_gpio);
+	// no_os_gpio_remove(ad74413r_reset_gpio);
 	no_os_gpio_remove(ad74413r_ldac_gpio);
 	no_os_gpio_remove(adin1110_cfg0_gpio);
 	no_os_gpio_remove(max14906_en_gpio);

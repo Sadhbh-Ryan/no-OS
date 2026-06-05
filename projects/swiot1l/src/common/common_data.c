@@ -233,7 +233,7 @@ const struct no_os_platform_spi_delays ad74413r_spi_delays = {
 
 const struct no_os_spi_init_param ad74413r_spi_ip = {
 	.device_id = 3,
-	.max_speed_hz = 1000000,
+	.max_speed_hz = 15000000,
 	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
 	.mode = NO_OS_SPI_MODE_2,
 	.platform_ops = &max_spi_ops,
@@ -270,6 +270,12 @@ const struct no_os_gpio_init_param psu_gpio_ip = {
 	.extra = GPIO_EXTRA
 };
 
+// struct swiot_iio_desc_init_param swiot_ip = {
+// 	.psu_gpio_param = psu_gpio_ip,
+// 	.identify_gpio_param = swiot_led2_ip,
+// 	.mode = SWIOT_CONFIG,
+// };
+
 struct max149x6_init_param max14906_ip = {
 	.chip_address = 0,
 	.comm_param = &max14906_spi_ip,
@@ -285,9 +291,10 @@ const struct no_os_irq_init_param ad74413r_nvic_ip = {
 struct ad74413r_init_param ad74413r_ip = {
 	.chip_id = AD74413R,
 	.comm_param = ad74413r_spi_ip,
+	.reset_gpio_param = &ad74413r_reset_ip,
 };
 
-#ifdef SWIOT1L_DEFAULT_FW
+// #ifdef SWIOT1L_DEFAULT_FW
 /* GPIO trigger */
 struct no_os_irq_init_param ad74413r_gpio_irq_ip = {
 	.irq_ctrl_id = GPIO_IRQ_ID,
@@ -319,4 +326,38 @@ struct iio_trigger ad74413r_iio_trig_desc = {
 	.enable = iio_trig_enable,
 	.disable = iio_trig_disable
 };
+
+// Adding in ADXL355 Support 
+
+struct no_os_uart_init_param adxl355_uart_ip = {
+	.device_id = UART_DEVICE_ID,
+	.irq_id = UART_IRQ_ID,
+	.asynchronous_rx = true,
+	.baud_rate = UART_BAUDRATE,
+	.size = NO_OS_UART_CS_8,
+	.parity = NO_OS_UART_PAR_NO,
+	.stop = NO_OS_UART_STOP_1_BIT,
+	.extra = UART_EXTRA,
+	.platform_ops = UART_OPS,
+};
+
+struct no_os_spi_init_param adxl355_spi_ip = {
+	.device_id = SPI1_DEVICE_ID,
+	.max_speed_hz = SPI1_BAUDRATE,
+	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
+	.mode = NO_OS_SPI_MODE_0,
+	.platform_ops = SPI1_OPS,
+	.chip_select = SPI1_CS,
+	.extra = SPI1_EXTRA,
+};
+
+struct adxl355_init_param adxl355_ip = {
+	.comm_type = ADXL355_SPI_COMM,
+#ifdef ADXL359_DEV
+	.dev_type = ID_ADXL359,
+#elif defined ADXL357_DEV
+	.dev_type = ID_ADXL357,
+#else
+	.dev_type = ID_ADXL355,
 #endif
+};

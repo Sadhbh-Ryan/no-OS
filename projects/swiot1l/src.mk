@@ -1,4 +1,8 @@
 LIBRARIES += lwip
+
+TINYIIOD=y
+IIOD=y
+
 INCS += $(PROJECT)/src/common/sntp.h
 SRCS += $(PROJECT)/src/common/sntp.c
 
@@ -14,6 +18,8 @@ SRCS += $(PROJECT)/src/platform/$(PLATFORM)/main.c
 
 INCS += $(PROJECT)/src/common/common_data.h
 SRCS += $(PROJECT)/src/common/common_data.c
+INCS += $(PROJECT)/src/common/swiot.h
+SRCS += $(PROJECT)/src/common/swiot.c
 
 INCS += $(PROJECT)/src/platform/platform_includes.h
 
@@ -60,14 +66,24 @@ SRCS += $(DRIVERS)/api/no_os_gpio.c \
 
 INCS += $(DRIVERS)/adc-dac/ad74413r/ad74413r.h
 SRCS += $(DRIVERS)/adc-dac/ad74413r/ad74413r.c
+INCS += $(DRIVERS)/adc-dac/ad74413r/iio_ad74413r.h
+SRCS += $(DRIVERS)/adc-dac/ad74413r/iio_ad74413r.c
 
 INCS += $(DRIVERS)/digital-io/max149x6/max149x6-base.h	\
 	$(DRIVERS)/digital-io/max149x6/max14906.h
 SRCS += $(DRIVERS)/digital-io/max149x6/max149x6-base.c	\
 	$(DRIVERS)/digital-io/max149x6/max14906.c
 
+INCS += $(DRIVERS)/digital-io/max149x6/iio_max14906.h
+SRCS += $(DRIVERS)/digital-io/max149x6/iio_max14906.c
+
 INCS += $(DRIVERS)/temperature/adt75/adt75.h
 SRCS += $(DRIVERS)/temperature/adt75/adt75.c
+INCS += $(DRIVERS)/temperature/adt75/iio_adt75.h
+SRCS += $(DRIVERS)/temperature/adt75/iio_adt75.c
+
+INCS += $(DRIVERS)/accel/adxl355/adxl355.h
+SRCS += $(DRIVERS)/accel/adxl355/adxl355.c
 
 INCS += $(INCLUDE)/no_os_crc8.h
 INCS += $(DRIVERS)/net/adin1110/adin1110.h
@@ -143,3 +159,12 @@ LIBRARIES += mqtt
 SRCS += $(PROJECT)/src/examples/swiot1l-mqtt/swiot1l_mqtt.c
 INCS += $(PROJECT)/src/examples/swiot1l-mqtt/swiot1l_mqtt.h
 endif
+
+
+SRCS += $(PROJECT)/src/swiot_fw.c
+INCS += $(PROJECT)/src/swiot_fw.h
+
+SRC_DIRS += $(NO-OS)/iio/iio_app
+
+SRCS += $(NO-OS)/iio/iio_trigger.c
+INCS += $(NO-OS)/iio/iio_trigger.h

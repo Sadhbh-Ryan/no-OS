@@ -76,7 +76,7 @@ struct swiot_config_state {
 
 struct swiot_iio_desc {
 	struct ad74413r_iio_desc *ad74413r;
-	struct max149x6_iio_desc *max14906;
+	struct max14906_iio_desc *max14906;
 	struct adin1110_desc *adin1110;
 	struct iio_device *iio_dev;
 	uint32_t active_channels;
@@ -95,7 +95,7 @@ struct swiot_iio_desc {
 
 struct swiot_iio_desc_init_param {
 	struct ad74413r_iio_desc *ad74413r;
-	struct max149x6_iio_desc *max14906;
+	struct max14906_iio_desc *max14906;
 	struct no_os_gpio_init_param psu_gpio_param;
 	struct no_os_gpio_init_param identify_gpio_param;
 	enum swiot_mode mode;
