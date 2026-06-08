@@ -106,3 +106,85 @@ struct lwip_network_param lwip_ip = {
 	.mac_param = &adin1110_ip,
 };
 #endif
+
+#if defined(APARD32690_MQTT_EXAMPLE)
+// Adding in ADXL355 Support 
+struct no_os_uart_init_param adxl355_uart_ip = {
+	.device_id = 0,
+	.irq_id = UART0_IRQn,
+	.asynchronous_rx = true,
+	.baud_rate = 115200,
+	.size = NO_OS_UART_CS_8,
+	.parity = NO_OS_UART_PAR_NO,
+	.stop = NO_OS_UART_STOP_1_BIT,
+	.extra = &uart_extra_ip,
+	.platform_ops = &max_uart_ops,
+};
+
+struct no_os_spi_init_param adxl355_spi_ip = {
+	.device_id = 4,
+	.max_speed_hz = 10000000,
+	.bit_order = NO_OS_SPI_BIT_ORDER_MSB_FIRST,
+	.mode = NO_OS_SPI_MODE_0,
+	.platform_ops = &max_spi_ops,
+	.chip_select = 0,
+	.extra = &adxl355_spi_extra_ip,
+};
+
+struct adxl355_init_param adxl355_ip = {
+	.comm_type = ADXL355_SPI_COMM,
+#ifdef ADXL359_DEV
+	.dev_type = ID_ADXL359,
+#elif defined ADXL357_DEV
+	.dev_type = ID_ADXL357,
+#else
+	.dev_type = ID_ADXL355,
+#endif
+};
+
+// Add in additional support for ADXL355 PMOD Interface 
+struct max_uart_init_param adxl355_uart_extra_ip = {
+	.flow = MAX_UART_FLOW_DIS
+};
+
+struct max_spi_init_param adxl355_spi_extra_ip = {
+	.num_slaves = 2,
+	.polarity = SPI_SS_POL_LOW,
+	.vssel = MXC_GPIO_VSSEL_VDDIOH,
+};
+
+//adt7420 support
+struct no_os_uart_init_param adt7420_uart_ip = {
+	.device_id = 2,
+	.irq_id = UART2_IRQn,
+	.asynchronous_rx = true,
+	.baud_rate = 115200,
+	.size = NO_OS_UART_CS_8,
+	.parity = NO_OS_UART_PAR_NO,
+	.stop = NO_OS_UART_STOP_1_BIT,
+	.platform_ops = &max_uart_ops,
+	.extra = &adt7420_uart_extra_ip,
+};
+
+const struct no_os_i2c_init_param adt7420_i2c_ip = {
+	.device_id = 0,
+	.max_speed_hz = 100000, //10000000
+	.slave_address = 0x48,
+	.extra = NULL,
+	.platform_ops = &max_i2c_ops,
+	.extra = &adt7420_i2c_extra,
+};
+
+struct adt7420_init_param adt7420_user_init = {
+	.interface_init = adt7420_i2c_ip,
+	.active_device = ID_ADT7420
+};
+
+struct max_uart_init_param adt7420_uart_extra_ip = {
+	.flow = MAX_UART_FLOW_DIS,
+};
+
+struct max_i2c_init_param adt7420_i2c_extra = {
+	.vssel = MXC_GPIO_VSSEL_VDDIOH
+};
+#endif

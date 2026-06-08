@@ -35,8 +35,15 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <inttypes.h>
 
 #include "common_data.h"
+
+#include "adt7420.h"
+#include "adxl355.h"
+#include "sensor_init.h"
 
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
@@ -223,8 +230,14 @@ int mqtt_example_main()
 	int ret;
 	uint8_t send_buff[512];
 	uint8_t read_buff[512];
-	char val_buff[32];
+	char val_buff[256];
 	uint32_t msg_len;
+
+	struct adt7420_dev *adt7420;
+	uint16_t temp_max = 0, temp_min = 0;
+	uint16_t temp_msb_l = 0, temp_lsb_l = 0;
+	float temp_c_max, temp_c_min;
+	float temp_now;
 
 	struct no_os_uart_desc *uart_desc;
 	struct lwip_network_desc *lwip_desc;
@@ -246,6 +259,9 @@ int mqtt_example_main()
 	};
 
 	uint32_t connect_timeout = 5000;
+
+	// Setup connection to the ADXL Part 
+	// adxl355();
 
 	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
 	memcpy(lwip_ip.hwaddr, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
@@ -300,25 +316,12 @@ int mqtt_example_main()
 	sntp_init();
 	no_os_mdelay(2000);
 
-	// char ca_cert[] = CA_CERT;
-	// char client_cert[] = DEVICE_CERT;
-	// char pki[] = DEVICE_PRIVATE_KEY;
+	// Setup connection to ADT Part
+	init_adt7420();
 
 	struct no_os_trng_init_param trng_ip = {
 		.platform_ops = &max_trng_ops
 	};
-
-	// struct secure_init_param secure_params = {
-	// 	.trng_init_param = &trng_ip,
-	// 	.ca_cert = ca_cert,
-	// 	.ca_cert_len = NO_OS_ARRAY_SIZE(ca_cert),
-	// 	.cli_cert = client_cert,
-	// 	.cli_cert_len = NO_OS_ARRAY_SIZE(client_cert),
-	// 	.cli_pk = pki, 
-	// 	.cli_pk_len = NO_OS_ARRAY_SIZE(pki),
-	// 	.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
-	// };
-	// tcp_ip.secure_init_param = &secure_params;
 
 	struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
@@ -380,7 +383,7 @@ int mqtt_example_main()
 
 	struct mqtt_connect_config conn_config = {
 		.version = MQTT_VERSION_3_1_1,
-		.keep_alive_ms = 60000,
+		.keep_alive_ms = 6000,
 		.client_name = mqtt_hub_client_id,
 		.username = mqtt_hub_user_name,
 		.password = mqtt_hub_password
@@ -395,21 +398,125 @@ int mqtt_example_main()
 
 	struct mqtt_message test_msg = {
 		.qos = 0,
-		.payload = "Sensor value: 28C",
-		.len = strlen(test_msg.payload),
+		.payload = val_buff,
 		.retained = false
 	};
 
-	while (1) {
+	while(1){
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
+		// // Temp Sensor - ADT7420
+		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_HIGH_MSB, &temp_msb_l);
+		if (ret)
+			goto error_adt7420;
+	
+		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_HIGH_LSB, &temp_lsb_l);
+		if (ret)
+			goto error_adt7420;
+		
+		temp_max = (((uint8_t)temp_msb_l) << 8) | ((uint8_t)temp_lsb_l);
+
+		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_LOW_MSB, &temp_msb_l);
+		if (ret)
+			goto error_adt7420;
+		
+		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_LOW_LSB, &temp_lsb_l);
+		if (ret)
+			goto error_adt7420;
+		
+		temp_min = (temp_msb_l << 8) | temp_lsb_l;
+
+		if (adt7420->resolution_setting) {
+			if (temp_max & ADT7420_16BIT_SIGN) {
+				/*! Negative temperature */
+				temp_c_max = (float)((int32_t)temp_max - ADT7420_16BIT_NEG) / ADT7420_16BIT_DIV;
+				temp_c_min = (float)((int32_t)temp_min - ADT7420_16BIT_NEG) / ADT7420_16BIT_DIV;
+			} else {
+				/*! Positive temperature */
+				temp_c_max = (float)temp_max / ADT7420_16BIT_DIV;
+				temp_c_min = (float)temp_min / ADT7420_16BIT_DIV;
+			}
+		} else {
+			temp_max >>= 3;
+			temp_min >>= 3;
+			if (temp_max & ADT7420_13BIT_SIGN) {
+				/*! Negative temperature */
+				temp_c_max = (float)((int32_t)temp_max - ADT7420_13BIT_NEG) / ADT7420_13BIT_DIV;
+				temp_c_min = (float)((int32_t)temp_min - ADT7420_13BIT_NEG) / ADT7420_13BIT_DIV;
+			} else {
+				/*! Positive temperature */
+				temp_c_max = (float)temp_max / ADT7420_13BIT_DIV;
+				temp_c_min = (float)temp_min / ADT7420_13BIT_DIV;
+			}
+		}
+
+		temp_now = adt7420_get_temperature(adt7420);
+		uint32_t hyst = 5;
+		ret = adt7420_reg_write(adt7420, ADT7420_REG_HIST, hyst);
+		if (ret)
+			goto error_adt7420;
+		uint16_t readval = 0;
+		ret = adt7420_reg_read(adt7420, ADT7420_REG_HIST, &readval);
+		if (ret)
+			goto error_adt7420;
+		memset(val_buff, 0, sizeof(val_buff));
+		msg_len = snprintf(val_buff, sizeof(val_buff), "Temperature: %lf C", temp_now);
+		printf("Temp read is %lf\r\n", temp_now);
+		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		printf("MQTT Message: %s\n", test_msg.payload);
+		// no_os_mdelay(2000);
+
+		// // Accelerometer Sensor - ADXL355
+		// ret = adxl355_get_xyz(adxl355_desc, &x[0], &y[0], &z[0]);
+		// if (ret)
+		// 	printf("Failed to read raw x, y, z output - %d\n", ret);
+
+
+		// ret = adxl355_get_fifo_data(adxl355_desc,
+		// 	&fifo_entries,
+		// 	&x[0],
+		// 	&y[0],
+		// 	&z[0]);
+		// if (ret)
+		// 	printf("Failed to read FIFO data - %d\n", ret);
+	
+		// ret = adxl355_get_sts_reg(adxl355_desc, &status_flags);
+		// if (ret)
+		// 	printf("Failed to read status reg - %d\n", ret);
+
+		// // ret = adxl355_get_temp(adxl355_desc, &temp);
+		// // if (ret)
+		// // 	printf("Failed to read - %d\n\r", ret);
+		// // else
+		// // {
+		// // 	printf(" Temp =%d"".%09u millidegress Celsius \n\r", (int)temp.integer,
+		// // 		(abs)(temp.fractional));
+		// // }
+
+		// // MQTT Publish x y z 
+		// memset(val_buff, 0, sizeof(val_buff));
+		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
+		// test_msg.len = msg_len;
+		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		// no_os_mdelay(100);
+
+		// memset(val_buff, 0, sizeof(val_buff));
+		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
+		// test_msg.len = msg_len;
+		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		// no_os_mdelay(100);
+
+		// memset(val_buff, 0, sizeof(val_buff));
+		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
+		// test_msg.len = msg_len;
+		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+
 		no_os_mdelay(2000);
 	}
-
 	return 0;
 
+error_adt7420:
+	adt7420_remove(adt7420);
 free_mqtt:
 	mqtt_remove(mqtt);
 free_socket:

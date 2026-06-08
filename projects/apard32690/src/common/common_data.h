@@ -46,6 +46,23 @@
 #include "maxim_gpio.h"
 #include "maxim_spi.h"
 
+#if defined(APARD32690_MQTT_EXAMPLE)
+#include "adxl355.h"
+
+extern struct no_os_uart_init_param adxl355_uart_ip;
+extern struct no_os_spi_init_param adxl355_spi_ip;
+extern struct adxl355_init_param adxl355_ip;
+extern struct max_spi_init_param adxl355_spi_extra_ip;
+
+#include "adt7420.h"
+#include "maxim_i2c.h"
+#include "maxim_irq.h"
+extern struct max_uart_init_param adt7420_uart_extra_ip;
+extern struct max_i2c_init_param adt7420_i2c_extra;
+extern const struct no_os_i2c_init_param adt7420_i2c_ip;
+extern struct adt7420_init_param adt7420_user_init;
+#endif
+
 extern struct no_os_uart_init_param uart_ip;
 
 #if defined(APARD32690_ADIN1110_STANDALONE_EXAMPLE)

@@ -450,8 +450,9 @@ int adt7420_i2c_reg_read(struct adt7420_dev *dev, uint16_t register_address,
 	else
 		num_bytes = 1;
 
-	if (no_os_i2c_write(dev->i2c_desc, &register_address, 1,
-			    0)) //add a repeat start
+	uint8_t reg_addr = (uint8_t)register_address;
+
+	if (no_os_i2c_write(dev->i2c_desc, &reg_addr, 1, 0)) //add a repeat start
 		return -1;
 	if (no_os_i2c_read(dev->i2c_desc, data_buffer, num_bytes, 1))
 		return -1;

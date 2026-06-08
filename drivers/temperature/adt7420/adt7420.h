@@ -36,6 +36,7 @@
 #include "no_os_spi.h"
 #include "no_os_i2c.h"
 #include "no_os_util.h"
+#include "no_os_delay.h"
 #include <stdbool.h>
 
 /* ADT7420 address */
