@@ -43,7 +43,7 @@
 
 #include "adt7420.h"
 #include "adxl355.h"
-#include "sensor_init.h"
+// #include "sensor_init.h"
 
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
@@ -239,6 +239,14 @@ int mqtt_example_main()
 	float temp_c_max, temp_c_min;
 	float temp_now;
 
+	struct adxl355_dev* adxl355;
+	struct adxl355_frac_repr x[32] = { 0 };
+	struct adxl355_frac_repr y[32] = { 0 };
+	struct adxl355_frac_repr z[32] = { 0 };
+	struct adxl355_frac_repr temp;
+	union adxl355_sts_reg_flags status_flags = { 0 };
+	uint8_t fifo_entries = 0;
+
 	struct no_os_uart_desc *uart_desc;
 	struct lwip_network_desc *lwip_desc;
 	struct tcp_socket_desc *tcp_socket;
@@ -250,6 +258,60 @@ int mqtt_example_main()
 		return ret;
 	no_os_uart_stdio(uart_desc);
 
+	// Accelerometer Sensor - ADXL355
+	adxl355_ip.comm_init.spi_init = adxl355_spi_ip;
+
+	ret = adxl355_init(&adxl355, adxl355_ip);
+	if (ret)
+		{
+		printf("Failed to Initialise ADXL355 - %d\n\r", ret);
+		goto error_adxl355;
+		}
+		
+	ret = adxl355_soft_reset(adxl355);
+	if (ret)
+		{
+		printf("Failed to Soft Reset ADXL355 - %d\n\r", ret);
+		goto error_adxl355;
+		}
+
+	// no_os_mdelay(200);
+
+	ret = adxl355_set_odr_lpf(adxl355, ADXL355_ODR_3_906HZ);
+	if (ret)
+		{
+		printf("Failed to Initialise ADXL355 Filter - %d\n\r", ret);
+		goto error_adxl355;
+		}
+
+	ret = adxl355_set_op_mode(adxl355, ADXL355_MEAS_TEMP_ON_DRDY_OFF);
+	if (ret)
+		{
+		printf("Failed to Set Mode ADXL355 - %d\n\r", ret);
+		goto error_adxl355;
+		}
+
+		no_os_mdelay(100);
+
+	// Temp sensor
+	ret = adt7420_init(&adt7420, adt7420_user_init);
+	if (ret)
+		{
+		printf("Failed to Initialise ADT7420 - %d\n\r", ret);
+		goto error_adt7420;
+		}
+
+	no_os_mdelay(100);
+
+	ret = adt7420_reset(adt7420);
+	if (ret)
+		{
+		printf("Failed to Reset ADT7420 - %d\n\r", ret);
+		goto error_adt7420;
+		}
+
+	no_os_mdelay(100);
+
 	struct no_os_timer_init_param timer_param = {
 		.id = 0,                      // Timer 0
 		.freq_hz = 32000,             // 32 kHz clock
@@ -259,9 +321,6 @@ int mqtt_example_main()
 	};
 
 	uint32_t connect_timeout = 5000;
-
-	// Setup connection to the ADXL Part 
-	// adxl355();
 
 	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
 	memcpy(lwip_ip.hwaddr, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
@@ -316,9 +375,6 @@ int mqtt_example_main()
 	sntp_init();
 	no_os_mdelay(2000);
 
-	// Setup connection to ADT Part
-	init_adt7420();
-
 	struct no_os_trng_init_param trng_ip = {
 		.platform_ops = &max_trng_ops
 	};
@@ -350,7 +406,7 @@ int mqtt_example_main()
 	struct mqtt_init_param	mqtt_init_param = {
 		.sock = tcp_socket,
 		.timer_init_param = &timer_param,
-		.command_timeout_ms = 20000,
+		.command_timeout_ms = 5000000,
 		.send_buff = send_buff,
 		.read_buff = read_buff,
 		.send_buff_size = 512,
@@ -363,6 +419,8 @@ int mqtt_example_main()
 		printf("MQTT init error: %d (%s)\n", ret, strerror(-ret));
 		goto free_socket;
 	}
+
+	no_os_mdelay(1000);
 
 	ret = socket_connect(tcp_socket, &ip_addr);
 	if (ret) {
@@ -383,11 +441,13 @@ int mqtt_example_main()
 
 	struct mqtt_connect_config conn_config = {
 		.version = MQTT_VERSION_3_1_1,
-		.keep_alive_ms = 6000,
+		.keep_alive_ms = 72000,
 		.client_name = mqtt_hub_client_id,
 		.username = mqtt_hub_user_name,
 		.password = mqtt_hub_password
 	};
+
+	// no_os_mdelay(1000);
 
 	ret = mqtt_connect(mqtt, &conn_config, NULL);
 	if (ret) {
@@ -405,118 +465,59 @@ int mqtt_example_main()
 	while(1){
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
-		// // Temp Sensor - ADT7420
-		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_HIGH_MSB, &temp_msb_l);
-		if (ret)
-			goto error_adt7420;
-	
-		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_HIGH_LSB, &temp_lsb_l);
-		if (ret)
-			goto error_adt7420;
-		
-		temp_max = (((uint8_t)temp_msb_l) << 8) | ((uint8_t)temp_lsb_l);
-
-		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_LOW_MSB, &temp_msb_l);
-		if (ret)
-			goto error_adt7420;
-		
-		ret = adt7420_reg_read(adt7420, ADT7420_REG_T_LOW_LSB, &temp_lsb_l);
-		if (ret)
-			goto error_adt7420;
-		
-		temp_min = (temp_msb_l << 8) | temp_lsb_l;
-
-		if (adt7420->resolution_setting) {
-			if (temp_max & ADT7420_16BIT_SIGN) {
-				/*! Negative temperature */
-				temp_c_max = (float)((int32_t)temp_max - ADT7420_16BIT_NEG) / ADT7420_16BIT_DIV;
-				temp_c_min = (float)((int32_t)temp_min - ADT7420_16BIT_NEG) / ADT7420_16BIT_DIV;
-			} else {
-				/*! Positive temperature */
-				temp_c_max = (float)temp_max / ADT7420_16BIT_DIV;
-				temp_c_min = (float)temp_min / ADT7420_16BIT_DIV;
-			}
-		} else {
-			temp_max >>= 3;
-			temp_min >>= 3;
-			if (temp_max & ADT7420_13BIT_SIGN) {
-				/*! Negative temperature */
-				temp_c_max = (float)((int32_t)temp_max - ADT7420_13BIT_NEG) / ADT7420_13BIT_DIV;
-				temp_c_min = (float)((int32_t)temp_min - ADT7420_13BIT_NEG) / ADT7420_13BIT_DIV;
-			} else {
-				/*! Positive temperature */
-				temp_c_max = (float)temp_max / ADT7420_13BIT_DIV;
-				temp_c_min = (float)temp_min / ADT7420_13BIT_DIV;
-			}
-		}
-
+		// Temperature Sensor - ADT7420
 		temp_now = adt7420_get_temperature(adt7420);
-		uint32_t hyst = 5;
-		ret = adt7420_reg_write(adt7420, ADT7420_REG_HIST, hyst);
-		if (ret)
-			goto error_adt7420;
-		uint16_t readval = 0;
-		ret = adt7420_reg_read(adt7420, ADT7420_REG_HIST, &readval);
-		if (ret)
-			goto error_adt7420;
 		memset(val_buff, 0, sizeof(val_buff));
 		msg_len = snprintf(val_buff, sizeof(val_buff), "Temperature: %lf C", temp_now);
-		printf("Temp read is %lf\r\n", temp_now);
+		// printf("Temp read is %lf\r\n", temp_now);
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		// no_os_mdelay(2000);
+		no_os_mdelay(2000);
 
-		// // Accelerometer Sensor - ADXL355
-		// ret = adxl355_get_xyz(adxl355_desc, &x[0], &y[0], &z[0]);
-		// if (ret)
-		// 	printf("Failed to read raw x, y, z output - %d\n", ret);
+		// Accelerometer Sensor - ADXL355
+		ret = adxl355_get_xyz(adxl355, &x[0], &y[0], &z[0]);
+		if (ret)
+			printf("Failed to read raw x, y, z output - %d\n", ret);
 
+		// MQTT Publish x y z 
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
+		}
+		else {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: Null");
+		}test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(100);
 
-		// ret = adxl355_get_fifo_data(adxl355_desc,
-		// 	&fifo_entries,
-		// 	&x[0],
-		// 	&y[0],
-		// 	&z[0]);
-		// if (ret)
-		// 	printf("Failed to read FIFO data - %d\n", ret);
-	
-		// ret = adxl355_get_sts_reg(adxl355_desc, &status_flags);
-		// if (ret)
-		// 	printf("Failed to read status reg - %d\n", ret);
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
+		}
+		else {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: Null");
+		}
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(100);
 
-		// // ret = adxl355_get_temp(adxl355_desc, &temp);
-		// // if (ret)
-		// // 	printf("Failed to read - %d\n\r", ret);
-		// // else
-		// // {
-		// // 	printf(" Temp =%d"".%09u millidegress Celsius \n\r", (int)temp.integer,
-		// // 		(abs)(temp.fractional));
-		// // }
-
-		// // MQTT Publish x y z 
-		// memset(val_buff, 0, sizeof(val_buff));
-		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
-		// test_msg.len = msg_len;
-		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		// no_os_mdelay(100);
-
-		// memset(val_buff, 0, sizeof(val_buff));
-		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
-		// test_msg.len = msg_len;
-		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		// no_os_mdelay(100);
-
-		// memset(val_buff, 0, sizeof(val_buff));
-		// msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
-		// test_msg.len = msg_len;
-		// ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
+		}
+		else {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: Null");
+		}
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		no_os_mdelay(2000);
 	}
 	return 0;
 
 error_adt7420:
 	adt7420_remove(adt7420);
+error_adxl355:
+	adxl355_remove(adxl355);
 free_mqtt:
 	mqtt_remove(mqtt);
 free_socket:

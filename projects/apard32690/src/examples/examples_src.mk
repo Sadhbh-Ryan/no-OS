@@ -74,9 +74,6 @@ SRC_DIRS += $(NO-OS)/libraries/mbedtls/library
 
 LIBRARIES += mqtt
 
-INCS += $(PROJECT)/src/common/sensor_init.h
-SRCS += $(PROJECT)/src/common/sensor_init.c
-
 INCS += $(DRIVERS)/accel/adxl355/adxl355.h
 SRCS += $(DRIVERS)/accel/adxl355/adxl355.c
 
