@@ -88,6 +88,10 @@ static char azure_topic[128];
 #include "maxim_trng.h"
 #include "maxim_timer.h"
 
+#include "ad7124.h"
+#include "ad7124_regs.h"
+#include "temperature_api.h"
+
 const struct max_spi_init_param spi_extra = {
 	.num_slaves = 1,
 	.polarity = SPI_SS_POL_LOW,
@@ -130,6 +134,47 @@ struct lwip_network_param lwip_ip = {
 	.mac_param = &adin1110_ip,
 };
 
+static const struct no_os_spi_init_param ad7124_spi_ip = {
+	.device_id      = AD7124_SPI_DEVICE_ID,
+	.max_speed_hz   = AD7124_SPI_CLK_SPEED,
+	.chip_select    = AD7124_SPI_CHIP_SEL,
+	.mode           = NO_OS_SPI_MODE_3,
+	.platform_ops   = &max_spi_ops,
+	.extra = &(struct max_spi_init_param)
+	{
+		.num_slaves = 1,
+		.polarity = SPI_SS_POL_LOW,
+		.vssel = MXC_GPIO_VSSEL_VDDIOH,
+	},
+};
+
+static const struct ad7124_init_param ad7124_ip = {
+	.spi_init = &ad7124_spi_ip,
+	.regs = ad7124_regs,
+	.spi_rdy_poll_cnt = AD7124_SPI_RDY_POL_CNT,
+	.mode = AD7124_CONTINUOUS,
+	.active_device = ID_AD7124_4,
+	.ref_en = false,
+	.power_mode = AD7124_HIGH_POWER,
+	.setups = {
+		/* Configuration for setup 0 only */
+		{
+			AD7124_BIPOLAR_MODE,
+			AD7124_BUFF_REF,
+			AD7124_BUFF_AIN,
+			EXTERNAL_REFIN1
+		},
+	},
+	.chan_map = {
+		/* Configuration for channel 0 only */
+		{
+			AD7124_CH0_ENABLE,
+			AD7124_CH0_SETUP_SEL,
+			AD7124_CH0_AIN_PINS,
+		},
+	},
+};
+
 void HardFault_Handler(void) {
 	// Optionally collect fault information
 	volatile uint32_t *hardfault_address = (uint32_t *)0xE000ED2C; // HFSR address
@@ -152,6 +197,33 @@ void HardFault_Handler(void) {
  *
  * @return ret - Result of the example execution.
 *******************************************************************************/
+static int ad7124_calibrate(struct ad7124_dev *ad7124)
+{
+	uint32_t ad7124_timeout = 100000;
+	int ret;
+
+	printf("Performing ADC calibration...\n");
+	ret = ad7124_set_adc_mode(ad7124, AD7124_IN_FULL_SCALE_GAIN);
+	if (ret)
+		return ret;
+
+	ret = ad7124_wait_for_conv_ready(ad7124, ad7124_timeout);
+	if (ret)
+		return ret;
+
+	ret = ad7124_set_adc_mode(ad7124, AD7124_IN_ZERO_SCALE_OFF);
+	if (ret)
+		return ret;
+
+	ret = ad7124_wait_for_conv_ready(ad7124, ad7124_timeout);
+	if (ret)
+		return ret;
+
+	printf("Calibration done!\n");
+
+	return 0;
+}
+
 void dns_callback_function(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
 
@@ -283,6 +355,25 @@ int mqtt_baremetal_main()
 	struct no_os_uart_desc *uart_desc;
 	struct lwip_network_desc *lwip_desc;
 	struct tcp_socket_desc *tcp_socket;
+	struct ad7124_dev *dev;         
+
+	enum ad7124_registers reg_nr;   /* Variable to iterate through registers */
+	int32_t sample;                 /* Stores raw value read from the ADC */
+	uint32_t ad7124_timeout = 10000;
+	uint32_t ch_id;                 /* Conversion channel ID */
+	float temperature;
+
+	temp_convert_t temperature_config = {
+		.input = TEMP_UNIT_LSB_RAW,
+		.output = TEMP_UNIT_CELSIUS,
+	};
+
+	temp_api_handle_t temp_handle = {
+		.calib_value = {
+			.gain = 16,
+			.offset = 0
+		},
+	};
 
 	uint8_t adin1110_mac_address[6] = {0x00, 0xe0, 0x22, 0x03, 0x25, 0x60};
 
@@ -291,16 +382,71 @@ int mqtt_baremetal_main()
 		return ret;
 	no_os_uart_stdio(uart_desc);
 
-	printf("Starting MQTT Example\n");
+	printf("Example Application\n\r");
 
-	struct no_os_timer_init_param timer_param = {
+	/* Initialize AD7124 device */
+	ret = ad7124_setup(&dev, &ad7124_ip);
+	if (ret != 0)
+		return ret;
+
+	/* Set PGA gain to 16 for setup 0 */
+	ret = ad7124_reg_write_msk(dev, AD7124_CFG0_REG, AD7124_CFG_REG_PGA(4),
+				   AD7124_CFG_REG_PGA(0x7));
+	if (ret != 0)
+		return ret;
+
+	ret = ad7124_calibrate(dev);
+	if (ret)
+		printf("ADC calibration failed! (%d)\n", ret);
+
+	/* Enable excitation current 250uA on AIN0 */
+	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT0(3),
+				   AD7124_IO_CTRL1_REG_IOUT0(0x7));
+	if (ret != 0)
+		return ret;
+
+	/* Set IOUT1 on AIN4 */
+	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT_CH1(4),
+				   AD7124_IO_CTRL1_REG_IOUT_CH1(0xF));
+	if (ret != 0)
+		return ret;
+
+	/* Enable excitation current 250uA on AIN4 */
+	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT1(3),
+				   AD7124_IO_CTRL1_REG_IOUT1(0x7));
+	if (ret != 0)
+		return ret;
+
+	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_PDSW,
+				   AD7124_IO_CTRL1_REG_PDSW);
+	if (ret != 0)
+		return ret;
+
+	/* Enable saturation error diagnostic */
+	ad7124_regs[AD7124_Error_En].value = 0x10000;
+
+	ret = ad7124_write_register(dev, ad7124_regs[AD7124_Error_En]);
+	if (ret != 0)
+		return ret;
+
+	/* Read all registers for sanity */
+	for (reg_nr = AD7124_Status; (reg_nr < AD7124_REG_NO) && !(ret < 0); reg_nr++) {
+		ret = ad7124_read_register(dev, &ad7124_regs[reg_nr]);
+		if (ret != 0)
+			return ret;
+	}
+
+	ret = ad7124_set_adc_mode(dev, AD7124_CONTINUOUS);
+	if (ret)
+		return ret;
+
+		struct no_os_timer_init_param timer_param = {
 		.id = 0,                      // Timer 0
 		.freq_hz = 32000,             // 32 kHz clock
 		.ticks_count = 0,        // Free mode
 		.platform_ops = &max_timer_ops,
 		.extra = NULL                 // No additional parameters needed
 	};
-
 	uint32_t connect_timeout = 5000;
 
 	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
@@ -367,18 +513,6 @@ int mqtt_baremetal_main()
 	};
 
 	#if (CONNECTION_TYPE == 1)
-	// struct secure_init_param secure_params = {
-	// 	.trng_init_param = &trng_ip,
-	// 	.ca_cert = ca_cert,
-	// 	.ca_cert_len = NO_OS_ARRAY_SIZE(ca_cert),
-	// 	.cli_cert = client_cert,
-	// 	.cli_cert_len = NO_OS_ARRAY_SIZE(client_cert),
-	// 	.cli_pk = pki, 
-	// 	.cli_pk_len = NO_OS_ARRAY_SIZE(pki),
-	// 	.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
-	// };
-	// tcp_ip.secure_init_param = &secure_params;
-
 	struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
 		.ca_cert = NULL,
@@ -455,15 +589,45 @@ int mqtt_baremetal_main()
 
 	struct mqtt_message test_msg = {
 		.qos = 0,
-		.payload = "Sensor value: 500",
-		.len = strlen(test_msg.payload),
+		.payload = val_buff,
 		.retained = false
 	};
 
-	while (1) {
+	while(1){
 		no_os_lwip_step(tcp_socket->net->net, NULL);
+
+		/* Wait for conversion */
+		ret = ad7124_wait_for_conv_ready(dev, ad7124_timeout);
+		if (ret != 0)
+			return ret;
+
+		/* Read data from the ADC */
+		sample = 0xffffffff;
+		ret = ad7124_read_data(dev, &sample);
+		if (ret != 0)
+			return ret;
+
+		/* Read channel ID and error from the last conversion */
+		// ret = ad7124_get_read_chan_id(dev, &ch_id);
+		// if (ret != 0)
+		// 	return ret;
+
+		// ret = ad7124_read_register(dev, &ad7124_regs[AD7124_Error]);
+		// if (ret != 0)
+		// 	return ret;
+
+		ret = conversion(&temp_handle, &temperature_config, &sample, &temperature);
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "PT100/Temperature: %.3f ", temperature);
+		printf("Temp = %.3f C\n" , temperature);
+		}
+		else {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "PT100/Temperature: Null");
+		}
+		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		printf("MQTT Message: %s\n", test_msg.payload);
+		
 		no_os_mdelay(2000);
 	}
 

@@ -216,12 +216,12 @@ static float temp_lsb_raw_to_fahrenheit(uint32_t lsb_value, int32_t gain_value)
  * @param lsb_value - ADC LSB raw value.
  * @param gain_value - Gain applied in LSB.
  * @param result - Converted value result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-static error_t temp_convert_lsb_raw(temp_convert_t *unit, uint32_t lsb_value,
+static temp_error_t temp_convert_lsb_raw(temp_convert_t *unit, uint32_t lsb_value,
                                     int32_t gain_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	switch(unit->output)
 	{
@@ -317,12 +317,12 @@ static float temp_resistance_to_fahrenheit(float rtd_value)
  * @param rtd_value - Resistance value to convert.
  * @param gain_value - Gain applied in LSB.
  * @param result - Converted value result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-static error_t temp_convert_resistance(temp_convert_t *unit, float rtd_value,
+static temp_error_t temp_convert_resistance(temp_convert_t *unit, float rtd_value,
                                        int32_t gain_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	switch(unit->output)
 	{
@@ -419,12 +419,12 @@ static float temp_kelvin_to_fahrenheit(float temp_value)
  * @param temp_value - Temperature value to convert.
  * @param gain_value - Gain applied in LSB.
  * @param result - Converted value result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-static error_t temp_convert_kelvin(temp_convert_t *unit, float temp_value,
+static temp_error_t temp_convert_kelvin(temp_convert_t *unit, float temp_value,
                                    int32_t gain_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	switch(unit->output)
 	{
@@ -521,12 +521,12 @@ static float temp_celsius_to_fahrenheit(float temp_value)
  * @param temp_value - Temperature value to convert.
  * @param gain_value - Gain applied in LSB.
  * @param result - Converted value result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-static error_t temp_convert_celsius(temp_convert_t *unit, float temp_value,
+static temp_error_t temp_convert_celsius(temp_convert_t *unit, float temp_value,
                                     int32_t gain_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	switch(unit->output)
 	{
@@ -623,12 +623,12 @@ static float temp_fahrenheit_to_celsius(float temp_value)
  * @param temp_value - Temperature value to convert.
  * @param gain_value - Gain applied in LSB.
  * @param result - Converted value result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-static error_t temp_convert_fahrenheit(temp_convert_t *unit, float temp_value, 
+static temp_error_t temp_convert_fahrenheit(temp_convert_t *unit, float temp_value, 
                                        int32_t gain_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	switch(unit->output)
 	{
@@ -670,13 +670,13 @@ static error_t temp_convert_fahrenheit(temp_convert_t *unit, float temp_value,
  * @param h - Temperature handler.
  * @param offset - Offset applied in LSB.
  * @param gain - Gain applied in LSB.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t set_calibration(temp_api_handle_t *h, int16_t offset, int16_t gain)
+temp_error_t set_calibration(temp_api_handle_t *h, int16_t offset, int16_t gain)
 {
 	static int16_t input_gain = CALIB_GAIN_DEFAULT_VALUE;
 	static int16_t input_offset = CALIB_OFFSET_DEFAULTVALUE;
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	if(h == NULL)
 	{
@@ -711,11 +711,11 @@ error_t set_calibration(temp_api_handle_t *h, int16_t offset, int16_t gain)
  *               - returns the ff.:
  *                 > default - if input parameter is invalid.
  *                 > output - valid calibration gain and offset values.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t get_calibration(temp_api_handle_t *h, temp_calib_t *result)
+temp_error_t get_calibration(temp_api_handle_t *h, temp_calib_t *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
     if(h == NULL)
 	{
@@ -740,11 +740,11 @@ error_t get_calibration(temp_api_handle_t *h, temp_calib_t *result)
  *                 > 0 - if all input parameters are invalid.
  *                 > value - if value is valid but others are invalid.
  *                 > output - valid computed calibration output result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result)
+temp_error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 	int32_t output = 0;
 
 	if((value - 1) >= CALIB_VALUE_MAX_SIZE ||
@@ -787,11 +787,11 @@ error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result)
  * @brief Set the linearization type to apply.
  * @param h - Temperature handler.
  * @param type - Type of linearization to be applied.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t set_linearization(temp_api_handle_t *h, temp_linear_t type)
+temp_error_t set_linearization(temp_api_handle_t *h, temp_linear_t type)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	if(h == NULL)
 	{
@@ -816,11 +816,11 @@ error_t set_linearization(temp_api_handle_t *h, temp_linear_t type)
  * @brief Get the type of linearization applied.
  * @param h - Temperature handler.
  * @param result - The linearization type that is stored.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t get_linearization(temp_api_handle_t *h, temp_linear_t *result)
+temp_error_t get_linearization(temp_api_handle_t *h, temp_linear_t *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	*result = TEMP_LINEAR_NONE;
 
@@ -841,11 +841,11 @@ error_t get_linearization(temp_api_handle_t *h, temp_linear_t *result)
  * @param h - Temperature handler.
  * @param rtd_value - The resistor value to be linearize.
  * @param result - Linearization result return value.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t linearize(temp_api_handle_t *h, float rtd_value, float *result)
+temp_error_t linearize(temp_api_handle_t *h, float rtd_value, float *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	if(h == NULL)
 	{
@@ -894,12 +894,12 @@ error_t linearize(temp_api_handle_t *h, float rtd_value, float *result)
  * @param type - Temperature input and output type unit.
  * @param value - Temperature value to be converted.
  * @param result - Temperature conversion result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t conversion(temp_api_handle_t *h, temp_convert_t *type, void *value,
+temp_error_t conversion(temp_api_handle_t *h, temp_convert_t *type, void *value,
                    void *result)
 {
-	error_t err_sts = ERROR_NONE;
+	temp_error_t err_sts = ERROR_NONE;
 
 	if((h == NULL) && (type == NULL))
 	{

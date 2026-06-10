@@ -1,5 +1,10 @@
 CFLAGS += -DHP_MQTT_BAREMETAL
 
+INCS += $(DRIVERS)/adc/ad7124/ad7124.h
+SRCS += $(DRIVERS)/adc/ad7124/ad7124.c
+INCS += $(DRIVERS)/adc/ad7124/ad7124_regs.h
+SRCS += $(DRIVERS)/adc/ad7124/ad7124_regs.c
+
 LIBRARIES += lwip
 INCS += $(PROJECT)/src/common/sntp.h
 SRCS += $(PROJECT)/src/common/sntp.c

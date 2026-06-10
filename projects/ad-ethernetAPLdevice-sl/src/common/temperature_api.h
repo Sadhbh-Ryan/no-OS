@@ -82,7 +82,7 @@ typedef enum
 	ERROR_INVALID_VALUE = 0xFFF2,
 	ERROR_UNDEFINED_VALUE = 0xFFF3,
 	ERROR_UNKNOWN = 0xFFFF,
-} error_t;
+} temp_error_t;
 
 typedef enum
 {
@@ -156,26 +156,26 @@ typedef struct
  * @param h - Temperature handler.
  * @param offset - Offset applied in LSB.
  * @param gain - Gain applied in LSB.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t set_calibration(temp_api_handle_t *h, int16_t offset, int16_t gain);
+temp_error_t set_calibration(temp_api_handle_t *h, int16_t offset, int16_t gain);
 
 /**
  * @brief Get the applied calibration values.
  * @param h - Temperature handler.
  * @param result - Calibration return value that is stored.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t get_calibration(temp_api_handle_t *h, temp_calib_t *result);
+temp_error_t get_calibration(temp_api_handle_t *h, temp_calib_t *result);
 
 /**
  * @brief Apply calibration to the LSB values.
  * @param h - Temperature handler.
  * @param value - Value to be calibrated.
  * @param result - Calibrated result return value.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result);
+temp_error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result);
 
 
 /* 
@@ -187,27 +187,27 @@ error_t calibrate(temp_api_handle_t *h, int32_t value, int32_t *result);
  * @param h - Temperature handler.
  * @param channel_no - ADC channel to apply linearization.
  * @param type - Type of linearization to be applied.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t set_linearization(temp_api_handle_t *h, temp_linear_t type);
+temp_error_t set_linearization(temp_api_handle_t *h, temp_linear_t type);
 
 /**
  * @brief Get the type of linearization applied.
  * @param h - Temperature handler.
  * @param channel_no - ADC channel to apply linearization.
  * @param result - The linearization type that is stored.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t get_linearization(temp_api_handle_t *h, temp_linear_t *result);
+temp_error_t get_linearization(temp_api_handle_t *h, temp_linear_t *result);
 
 /**
  * @brief Apply linearization to the resistor.
  * @param h - Temperature handler.
  * @param rtd_value - The resistor value to be linearize.
  * @param result - Linearization result return value.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t linearize(temp_api_handle_t *h, float rtd_value, float *result);
+temp_error_t linearize(temp_api_handle_t *h, float rtd_value, float *result);
 
 
 /* 
@@ -220,9 +220,9 @@ error_t linearize(temp_api_handle_t *h, float rtd_value, float *result);
  * @param type - Temperature input and output type unit.
  * @param value - Temperature value to be converted.
  * @param result - Temperature conversion result.
- * @return ERROR_NONE if success, error_t error codes otherwise.
+ * @return ERROR_NONE if success, temp_error_t error codes otherwise.
  */
-error_t conversion(temp_api_handle_t *h, temp_convert_t *type, void *value,
+temp_error_t conversion(temp_api_handle_t *h, temp_convert_t *type, void *value,
                    void *result);
 
 
