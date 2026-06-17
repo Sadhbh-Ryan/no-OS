@@ -154,23 +154,27 @@ static const struct ad7124_init_param ad7124_ip = {
 	.spi_rdy_poll_cnt = AD7124_SPI_RDY_POL_CNT,
 	.mode = AD7124_CONTINUOUS,
 	.active_device = ID_AD7124_4,
-	.ref_en = false,
-	.power_mode = AD7124_HIGH_POWER,
+	.ref_en = true,
+	.power_mode = AD7124_MID_POWER,
 	.setups = {
 		/* Configuration for setup 0 only */
 		{
-			AD7124_BIPOLAR_MODE,
-			AD7124_BUFF_REF,
-			AD7124_BUFF_AIN,
-			EXTERNAL_REFIN1
+			.bi_unipolar = AD7124_BIPOLAR_MODE,
+			.ref_buff = AD7124_BUFF_REF,
+			.ain_buff = AD7124_BUFF_AIN,
+			.pga = AD7124_PGA_16,
+			.ref_source = EXTERNAL_REFIN1,
 		},
 	},
 	.chan_map = {
 		/* Configuration for channel 0 only */
 		{
-			AD7124_CH0_ENABLE,
-			AD7124_CH0_SETUP_SEL,
-			AD7124_CH0_AIN_PINS,
+			.channel_enable = AD7124_CH0_ENABLE,
+			.setup_sel = AD7124_CH0_SETUP_SEL,
+			.ain = {
+				.ainp = AD7124_AIN1,
+				.ainm = AD7124_AIN3,
+			},
 		},
 	},
 };
@@ -395,9 +399,9 @@ int mqtt_baremetal_main()
 	if (ret != 0)
 		return ret;
 
-	ret = ad7124_calibrate(dev);
-	if (ret)
-		printf("ADC calibration failed! (%d)\n", ret);
+	// ret = ad7124_calibrate(dev);
+	// if (ret)
+	// 	printf("ADC calibration failed! (%d)\n", ret);
 
 	/* Enable excitation current 250uA on AIN0 */
 	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT0(3),
@@ -436,6 +440,21 @@ int mqtt_baremetal_main()
 			return ret;
 	}
 
+	printf("    AD7124_ID: 0x%08x\n\r", ad7124_regs[AD7124_ID].value);
+	printf("    AD7124_Status: 0x%08x\n\r", ad7124_regs[AD7124_Status].value);
+	printf("    AD7124_ADC_Control: 0x%08x\n\r", ad7124_regs[AD7124_ADC_Control].value);
+	printf("    AD7124_IOCon1: 0x%08x\n\r", ad7124_regs[AD7124_IOCon1].value);
+	printf("    AD7124_IOCon2: 0x%08x\n\r", ad7124_regs[AD7124_IOCon2].value);
+	printf("    AD7124_Channel_0: 0x%08x\n\r", ad7124_regs[AD7124_Channel_0].value);
+	printf("    AD7124_Channel_1: 0x%08x\n\r", ad7124_regs[AD7124_Channel_1].value);
+	printf("    AD7124_Config_0: 0x%08x\n\r", ad7124_regs[AD7124_Config_0].value);
+	printf("    AD7124_Config_1: 0x%08x\n\r", ad7124_regs[AD7124_Config_1].value);
+	printf("    AD7124_Offset_0: 0x%08x\n\r", ad7124_regs[AD7124_Offset_0].value);
+	printf("    AD7124_Gain_0: 0x%08x\n\r", ad7124_regs[AD7124_Gain_0].value);
+	printf("    AD7124_Error_En: 0x%08x\n\r", ad7124_regs[AD7124_Error_En].value);
+	printf("    AD7124_Error: 0x%08x\n\r", ad7124_regs[AD7124_Error].value);
+
+	printf("Conversion results:\n\r");
 	ret = ad7124_set_adc_mode(dev, AD7124_CONTINUOUS);
 	if (ret)
 		return ret;
@@ -594,8 +613,8 @@ int mqtt_baremetal_main()
 	};
 
 	while(1){
-		no_os_lwip_step(tcp_socket->net->net, NULL);
 
+		/* Wait for conversion */
 		/* Wait for conversion */
 		ret = ad7124_wait_for_conv_ready(dev, ad7124_timeout);
 		if (ret != 0)
@@ -608,19 +627,23 @@ int mqtt_baremetal_main()
 			return ret;
 
 		/* Read channel ID and error from the last conversion */
-		// ret = ad7124_get_read_chan_id(dev, &ch_id);
-		// if (ret != 0)
-		// 	return ret;
+		ret = ad7124_get_read_chan_id(dev, &ch_id);
+		if (ret != 0)
+			return ret;
 
-		// ret = ad7124_read_register(dev, &ad7124_regs[AD7124_Error]);
-		// if (ret != 0)
-		// 	return ret;
+		ret = ad7124_read_register(dev, &ad7124_regs[AD7124_Error]);
+		if (ret != 0)
+			return ret;
 
 		ret = conversion(&temp_handle, &temperature_config, &sample, &temperature);
+
+		printf("    Channel %d, TEMP = %.3f (C) ERROR = 0x%08x\n", ch_id, temperature,
+		       ad7124_regs[AD7124_Error].value);
+
+		no_os_lwip_step(tcp_socket->net->net, NULL);
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
 		msg_len = snprintf(val_buff, sizeof(val_buff), "PT100/Temperature: %.3f ", temperature);
-		printf("Temp = %.3f C\n" , temperature);
 		}
 		else {
 		msg_len = snprintf(val_buff, sizeof(val_buff), "PT100/Temperature: Null");

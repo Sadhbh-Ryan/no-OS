@@ -164,9 +164,9 @@ int ad7124_app_main(void)
 	if (ret != 0)
 		return ret;
 
-	ret = ad7124_calibrate(dev);
-	if (ret)
-		printf("ADC calibration failed! (%d)\n", ret);
+	// ret = ad7124_calibrate(dev);
+	// if (ret)
+	// 	printf("ADC calibration failed! (%d)\n", ret);
 
 	/* Enable excitation current 250uA on AIN0 */
 	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT0(3),
