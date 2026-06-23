@@ -1,9 +1,9 @@
 /***************************************************************************//**
- *   @file   common_data.h
- *   @brief  Defines common data to be used by all examples.
- *   @author Aron Kis (kis.aron@analog.com)
+ *   @file   mqtt_example.h
+ *   @brief  Header for the MQTT example
+ *   @author Sadhbh Ryan (sadhbh.ryan@analog.com)
 ********************************************************************************
- * Copyright 2025(c) Analog Devices, Inc.
+ * Copyright 2023(c) Analog Devices, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,38 +30,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
-#ifndef __COMMON_DATA_H__
-#define __COMMON_DATA_H__
+#ifndef __MQTT_EXAMPLE_H__
+#define __MQTT_EXAMPLEL_H__
 
-#include "no_os_uart.h"
-#include "no_os_util.h"
-#include "no_os_print_log.h"
+int example_main();
 
-#include "maxim_uart.h"
-#include "maxim_uart_stdio.h"
-#include "maxim_gpio.h"
-#include "maxim_spi.h"
-
-extern struct no_os_uart_init_param uart_ip;
-extern struct adin1110_init_param adin1110_ip;
-extern struct no_os_gpio_init_param adin1110_spi_cfg_0;
-extern struct no_os_gpio_init_param port2_cfg_0;
-
-int spi_cfg_0(const struct no_os_gpio_init_param adin1110_spi_cfg);
-int port2_cfg(const struct no_os_gpio_init_param port2_gpio_cfg, int state);
-
-#include "adxl355.h"
-extern struct no_os_uart_init_param adxl355_uart_ip;
-extern struct no_os_spi_init_param adxl355_spi_ip;
-extern struct adxl355_init_param adxl355_ip;
-extern struct max_spi_init_param adxl355_spi_extra_ip;
-
-#include "adt7420.h"
-#include "maxim_i2c.h"
-#include "maxim_irq.h"
-extern struct max_uart_init_param adt7420_uart_extra_ip;
-extern struct max_i2c_init_param adt7420_i2c_extra;
-extern const struct no_os_i2c_init_param adt7420_i2c_ip;
-extern struct adt7420_init_param adt7420_user_init;
-
-#endif /* __COMMON_DATA_H__ */
+#endif /* __MQTT_EXAMPLE_H__ */
