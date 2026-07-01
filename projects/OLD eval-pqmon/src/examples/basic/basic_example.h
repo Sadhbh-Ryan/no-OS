@@ -1,6 +1,6 @@
 /*******************************************************************************
- *   @file   status.h
- *   @brief  Status state definition header file
+ *   @file   basic_example.h
+ *   @brief  PQM firmware header file, called by main
  *   @author Robert Budai (robert.budai@analog.com)
  ********************************************************************************
  * Copyright (c) 2024 Analog Devices, Inc.
@@ -31,33 +31,50 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************/
 
-#ifndef __STATUS_H__
-#define __STATUS_H__
+#ifndef __PQM_FW_H__
+#define __PQM_FW_H__
 
-#define SYS_STATUS_SUCCESS 0
-#define SYS_STATUS_PQLIB_ERROR 1
-#define SYS_STATUS_NO_SIGNAL 2
-#define SYS_STATUS_PQLIB_RUNNING 3
-#define SYS_STATUS_PQLIB_CONFIG_ERROR 4
-#define SYS_STATUS_AFE_CONFIG0_FAILED 5
-#define SYS_STATUS_AFE_CONFIG1_FAILED 6
-#define SYS_STATUS_AFE_CONFIG2_FAILED 7
-#define SYS_STATUS_AFE_ACCMODE_FAILED 8
-#define SYS_STATUS_AFE_ZX_LP_SEL_FAILED 9
-#define SYS_STATUS_AFE_MASK0_FAILED 10
-#define SYS_STATUS_AFE_RUN_FAILED 11
-#define SYS_STATUS_AFE_WFB_CFG_FAILED 12
-#define SYS_STATUS_AFE_READWAVEFORM_FAILED 13
-#define SYS_STATUS_AFE_READRMS1012_FAILED 14
-#define SYS_STATUS_AFE_READRMSONE_FAILED 15
-#define SYS_STATUS_AFE_READPERIOD_FAILED 16
-#define SYS_STATUS_AFE_READANGLE_FAILED 17
-#define SYS_STATUS_AFE_READVERSION_FAILED 18
-#define SYS_STATUS_AFE_STATUS1_FAILED 19
-#define SYS_STATUS_AFE_STATUS0_FAILED 20
-#define SYS_STATUS_TIMER_INIT_FAILED 21
-#define SYS_STATUS_CALIBRATION_IN_PROGRESS 22
-#define SYS_STATUS_CALIBRATION_SUCCESS 23
-#define SYS_STATUS_CALIBRATION_ERROR 24
+#include "common_data.h"
+#include "no_os_error.h"
 
-#endif /* __AFE_CONFIG_H__ */
+/**
+ * @brief Initialize pqm descriptor
+ *
+ * @param desc Object descriptor
+ * @param param Initializing paramters
+ * @return Return 0 on success, different from 0 otherwise
+ */
+int32_t pqm_init(struct pqm_desc **desc, struct pqm_init_para *param);
+
+/**
+ * @brief Remove pqm descriptor
+ *
+ * @param desc Frees up memory space allocated for descriptor
+ * @return Return 0 on success, different from 0 otherwise
+ */
+int32_t pqm_remove(struct pqm_desc *desc);
+
+/**
+ * @brief active pqm channels
+ * @param dev - descriptor for the pqm
+ * @param mask - active channels mask
+ * @return 0 in case of success, -1 otherwise.
+ */
+int32_t update_pqm_channels(void *dev, uint32_t mask);
+
+/**
+ * @brief close all channels
+ * @param dev - physical instance of an pqm device
+ * @return 0 in case of success.
+ */
+int32_t close_pqm_channels(void *dev);
+
+/**
+ * @brief PQM example main execution
+ *
+ * @return If working correctly, will execute continuously function iio_app_run
+ * and will not return.
+ */
+int basic_pqm_firmware();
+
+#endif /* __PQM_FW_H__ */

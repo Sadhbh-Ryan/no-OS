@@ -32,7 +32,6 @@
  *******************************************************************************/
 
 #include "common_data.h"
-#include "lwip_socket.h"
 
 #if defined(PQM_CONN_ETH)
 
@@ -90,21 +89,21 @@ struct no_os_uart_init_param iio_demo_usb_ip = {
 	.extra = UART_EXTRA,
 	.platform_ops = &max_usb_uart_ops,
 }; // USB initialization parameter for iio connection
-// #elif defined(PQM_CONN_SERIAL) || defined(PQM_CONN_T1L)
-#endif
-// struct no_os_uart_init_param iio_demo_serial_ip = {
-// 	.device_id = UART_DEVICE_ID,
-// 	.irq_id = UART_IRQ_ID,
-// 	.asynchronous_rx = true,
-// 	.baud_rate = UART_BAUDRATE,
-// 	.size = NO_OS_UART_CS_8,
-// 	.parity = NO_OS_UART_PAR_NO,
-// 	.stop = NO_OS_UART_STOP_1_BIT,
-// 	.extra = UART_EXTRA,
-// 	.platform_ops = &max_uart_ops,
-// }; // SERIAL initialization parameter for iio connection
+#elif defined(PQM_CONN_SERIAL) || defined(PQM_CONN_T1L)
 
-// #if defined(PQM_CONN_T1L)
+struct no_os_uart_init_param iio_demo_serial_ip = {
+	.device_id = UART_DEVICE_ID,
+	.irq_id = UART_IRQ_ID,
+	.asynchronous_rx = true,
+	.baud_rate = UART_BAUDRATE,
+	.size = NO_OS_UART_CS_8,
+	.parity = NO_OS_UART_PAR_NO,
+	.stop = NO_OS_UART_STOP_1_BIT,
+	.extra = UART_EXTRA,
+	.platform_ops = &max_uart_ops,
+}; // SERIAL initialization parameter for iio connection
+
+#if defined(PQM_CONN_T1L)
 
 const struct no_os_gpio_init_param adin1110_int_ip = {
 	.port = 2,
@@ -180,8 +179,8 @@ struct lwip_network_param lwip_ip = {
 	.platform_ops = &adin1110_lwip_ops,
 	.mac_param = &adin1110_ip,
 };
-// #endif
-// #endif
+#endif
+#endif
 
 IIO_BUFF_TYPE iio_data_buffer_loc[MAX_SIZE_BASE_ADDR] = {0};
 
@@ -216,28 +215,8 @@ struct pqm_init_para pqm_ip = {
 		0.0,
 		0.0,
 		VCONSEL_4W_WYE,
-		ADI_PQLIB_FLICKER_MODEL_230V_50HZ,
 		ADI_PQLIB_NOMINAL_FREQUENCY_50HZ,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		CALIBRATION_TYPE_GAIN,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
+		ADI_PQLIB_FLICKER_MODEL_230V_50HZ
 	},
 	.dev_ch_attr = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -309,15 +288,4 @@ struct no_os_callback_desc afe0_callback_desc = {
 	.peripheral = NO_OS_GPIO_IRQ,
 	.ctx = NULL,
 	.handle = NULL,
-};
-
-struct no_os_uart_init_param uart_export_ip = {
-	.device_id = 2,
-	.asynchronous_rx = false,
-	.baud_rate = 460800,
-	.size = NO_OS_UART_CS_8,
-	.parity = NO_OS_UART_PAR_NO,
-	.stop = NO_OS_UART_STOP_1_BIT,
-	.extra = UART_STDIO_EXT,
-	.platform_ops = &max_uart_ops
 };

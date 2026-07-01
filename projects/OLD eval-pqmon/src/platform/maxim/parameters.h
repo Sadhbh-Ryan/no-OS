@@ -57,11 +57,10 @@
 #define UART_EXTRA &iio_demo_usb_uart_extra_ip
 #elif defined(PQM_CONN_SERIAL)
 #define UART_EXTRA &uart_stdio_extra_ip
-#endif
-// #elif defined(PQM_CONN_T1L)
+#elif defined(PQM_CONN_T1L)
 #define UART_EXTRA &uart_stdio_extra_ip
 #define ADIN_SPI_EXTRA &spi_extra_ip
-// #endif
+#endif
 
 #define SPI_CS 0
 #define SPI_DEVICE_ID 2

@@ -39,29 +39,15 @@
 #include "adi_pqlib_memory.h"
 #include "adi_pqlib_profile.h"
 #include "pqlib_convert.h"
-#include "afe_calibration.h"
 #include "status.h"
 #include <stddef.h>
 #include "no_os_circular_buffer.h"
 
-#define POWER_ENERGY_NUM_PHASES 3
 #define PQLIB_MAX_CHANNELS 7
 #define ADI_PQLIB_NUM_WAVEFORM_BLOCKS 4
 #define PQLIB_MAX_HARMONICS 50
 #define PQLIB_MAX_INTER_HARMONICS 50
 #define SIZE_OF_INPUT_RTC 19
-
-/**
- * @brief Power and energy data read from ADE9430 accumulation registers
- */
-typedef struct power_energy_data {
-	int32_t activePower[POWER_ENERGY_NUM_PHASES];
-	int32_t activeEnergyHi[POWER_ENERGY_NUM_PHASES];
-	int32_t reactiveEnergyHi[POWER_ENERGY_NUM_PHASES];
-	int32_t fundActivePower[POWER_ENERGY_NUM_PHASES];
-	int32_t fundActiveEnergyHi[POWER_ENERGY_NUM_PHASES];
-	int32_t fundReactiveEnergyHi[POWER_ENERGY_NUM_PHASES];
-} POWER_ENERGY_DATA;
 
 /**
  * @brief PQLIB Example states
@@ -70,8 +56,7 @@ typedef struct power_energy_data {
 typedef enum {
 	PQLIB_STATE_WAITING_FOR_START_CMD,
 	PQLIB_STATE_WAITING_FOR_TRIGGER,
-	PQLIB_STATE_RUNNING,
-	PQLIB_STATE_CALIBRATING
+	PQLIB_STATE_RUNNING
 } PQLIB_STATE;
 
 /**
@@ -133,13 +118,6 @@ typedef struct {
 	ADI_PQLIB_FLICKER_MODEL flickerModel;
 	ADI_PQLIB_PHASE_MAP phaseMap;
 	VCONSEL_CONFIG vconsel;
-	CALIBRATION_TYPE calibrationType; /* Gain or Offset calibration */
-	float calNominalCurrent;        /* Arms for gain calibration */
-	float calNominalVoltage;        /* Vrms for gain calibration */
-	float calOffsetCurrent;         /* Arms for offset calibration */
-	float calOffsetVoltage;         /* Vrms for offset calibration */
-	float currentPgaGain;           /* PGA gain for current (default 1) */
-	float voltagePgaGain;           /* PGA gain for voltage (default 1) */
 
 } EXAMPLE_CONFIG; // pqlib example config
 
@@ -148,7 +126,6 @@ typedef struct {
 	bool readyToDisplay;
 	bool waitingForSync;
 	bool calibration;
-	bool calibrationRequested;
 	uint16_t syncCycles;
 	uint32_t processedCycles;
 	uint32_t zeroCrossingCount;
@@ -167,7 +144,6 @@ typedef struct {
 	ADI_PQLIB_PHASE_MAP channelMap;
 	PQLIB_STATE state;
 	struct no_os_circular_buffer *no_os_cb_desc;
-	POWER_ENERGY_DATA powerEnergy;
 
 } PQLIB_EXAMPLE; // pqlib example struct
 
@@ -177,7 +153,6 @@ typedef struct {
  * @return 0 - on success, different from 0 otherwise
  */
 int pqm_one_cycle(void *);
-
 /**
  * @brief Prints error message for errors from the library. Serves
  * as an examples on how to handle the errors from the library.

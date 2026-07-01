@@ -38,11 +38,11 @@
 #include "w5500_network.h"
 #endif
 
-// #if defined(PQM_CONN_T1L)
+#if defined(PQM_CONN_T1L)
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
 #include "adin1110.h"
-// #endif
+#endif
 
 #include "adi_pqlib.h"
 #include "iio.h"
@@ -56,7 +56,6 @@
 #include "no_os_uart.h"
 #include "parameters.h"
 #include "pqlib_example.h"
-#include "afe_calibration.h"
 
 #define FW_VERSION 2.2
 
@@ -68,8 +67,8 @@
 
 #define TOTAL_PQM_CHANNELS 11
 #define VOLTAGE_CH_NUMBER 3
-#define MAX_CH_ATTRS 31
-#define PQM_DEVICE_ATTR_NUMBER 63
+#define MAX_CH_ATTRS 23
+#define PQM_DEVICE_ATTR_NUMBER 40
 #define WAVEFORM_BUFFER_LENGTH (256 * 7)
 #define MAX_EVENT_NUMBER 6
 
@@ -86,8 +85,7 @@ extern struct w5500_network_init_param w5500_network_ip;
 extern struct no_os_uart_init_param iio_demo_usb_ip;
 #elif defined(PQM_CONN_SERIAL)
 extern struct no_os_uart_init_param iio_demo_serial_ip;
-#endif
-// #elif defined(PQM_CONN_T1L)
+#elif defined(PQM_CONN_T1L)
 extern struct no_os_uart_init_param iio_demo_serial_ip;
 extern const struct no_os_gpio_init_param adin1110_int_ip;
 extern const struct no_os_gpio_init_param adin1110_rst_gpio_ip;
@@ -100,7 +98,7 @@ extern const struct no_os_spi_init_param adin1110_spi_ip;
 
 extern struct adin1110_init_param adin1110_ip;
 extern struct lwip_network_param lwip_ip;
-// #endif
+#endif
 
 extern struct pqm_init_para pqm_ip;
 extern struct no_os_spi_init_param spi_egy_ip;
@@ -111,7 +109,6 @@ extern struct no_os_gpio_init_param reset_gpio_ip;
 extern struct no_os_gpio_init_param intr_gpio_ip;
 extern struct no_os_irq_init_param afe_callback_ctrl_ip;
 extern struct no_os_callback_desc afe0_callback_desc;
-extern struct no_os_uart_init_param uart_export_ip;
 
 static const char *const pqm_v_consel_available[] = {
 	[VCONSEL_4W_WYE] = "4W_WYE",
@@ -126,17 +123,6 @@ static const char *const pqm_flicker_model_available[] = {
 	[ADI_PQLIB_FLICKER_MODEL_120V_50HZ] = "120V_50HZ",
 	[ADI_PQLIB_FLICKER_MODEL_230V_60HZ] = "230V_60HZ",
 	[ADI_PQLIB_FLICKER_MODEL_120V_60HZ] = "120V_60HZ",
-};
-
-static const char *const pqm_calibration_type_available[] = {
-	[CALIBRATION_TYPE_GAIN] = "GAIN",
-	[CALIBRATION_TYPE_OFFSET] = "OFFSET",
-};
-
-static const char *const pqm_calibration_phase_available[] = {
-	[CALIBRATION_PHASE_A] = "A",
-	[CALIBRATION_PHASE_B] = "B",
-	[CALIBRATION_PHASE_C] = "C",
 };
 
 static const char *const pqm_nominal_frequency_available[] = {

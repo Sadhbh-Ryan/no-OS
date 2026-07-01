@@ -37,7 +37,6 @@
 #include "pqlib_afe.h"
 #include "pqlib_convert.h"
 #include "pqlib_example.h"
-#include "afe_calibration.h"
 #include "status.h"
 #include <inttypes.h>
 
@@ -83,35 +82,6 @@
 #define SPOS_CURRENT_ANGLE              38
 #define SZRO_CURRENT_ANGLE              39
 
-// Calibration attributes
-#define CAL_TYPE                        40
-#define CAL_TYPE_AVAILABLE              41
-#define CAL_STATUS                      42
-#define CAL_PHASE                       43
-#define CAL_NOMINAL_CURRENT             44
-#define CAL_NOMINAL_VOLTAGE             45
-#define CAL_OFFSET_CURRENT              46
-#define CAL_OFFSET_VOLTAGE              47
-#define CAL_PHASE_AVAILABLE             48
-#define CAL_START                       49
-// Gain calibration errors
-#define CAL_GAIN_I_ERROR_BEFORE         50
-#define CAL_GAIN_V_ERROR_BEFORE         51
-#define CAL_GAIN_I_ERROR_AFTER          52
-#define CAL_GAIN_V_ERROR_AFTER          53
-// Offset calibration errors
-#define CAL_OFFSET_I_ERROR_BEFORE       54
-#define CAL_OFFSET_V_ERROR_BEFORE       55
-#define CAL_OFFSET_I_ERROR_AFTER        56
-#define CAL_OFFSET_V_ERROR_AFTER        57
-
-// Flash storage attributes
-#define FLASH_CAL_SAVE                  58
-#define FLASH_CAL_LOAD                  59
-#define FLASH_CAL_ERASE                 60
-#define FLASH_STAT                      61
-#define FLASH_CAL_DATA                  62
-
 // Channel specific attributes
 #define CHAN_RMS                        0
 #define CHAN_ANGLE                      1
@@ -136,14 +106,6 @@
 #define CHAN_EVENT_DELTA_U_SS           20
 #define CHAN_VOLTAGE_MAGNITUDE1012      21
 #define CHAN_VOLTAGE_MAX_MAGNITUDE      22
-#define CHAN_ACTIVE_POWER               23
-#define CHAN_REACTIVE_ENERGY            24
-#define CHAN_ACTIVE_ENERGY              25
-#define CHAN_POWER_FACTOR               26
-#define CHAN_FUND_ACTIVE_POWER          27
-#define CHAN_FUND_REACTIVE_ENERGY       28
-#define CHAN_FUND_ACTIVE_ENERGY         29
-#define CHAN_DISPLACEMENT_PF            30
 
 #define RESAMPLED_WAVEFORM_FULL_SCALE   18196
 

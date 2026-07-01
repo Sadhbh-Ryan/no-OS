@@ -195,15 +195,6 @@ int afe_read_angle(uint16_t *pAngle, uint16_t numAngles,
 int afe_read_status_1(uint32_t *pSTATUS1);
 
 /**
- * @brief Read STATUS1 register and clear ZX bit for specified phase.
- * @param[out] pSTATUS1  - pointer to read STATUS1.
- * @param[in] phase      - phase to clear ZX bit for (0=A, 1=B, 2=C)
- * @return status        - SYS_STATUS_SUCCESS on Success
- *                       - SYS_STATUS_AFE_STATUS1_FAILED on Failure.
- */
-int afe_read_status_1_clear_zx(uint32_t *pSTATUS1, uint8_t phase);
-
-/**
  * @brief Read STATUS0 register.
  * @param[out] pSTATUS0   - pointer to read STATUS0.
  * @return status 	     - SYS_STATUS_SUCCESS on Success,
@@ -286,11 +277,5 @@ int afe_write_32bit_reg(uint16_t addr, uint32_t *pData);
  * @return status 0 for success.
  */
 int afe_write_16bit_reg(uint16_t addr, uint16_t *pData);
-/**
- * @brief Reads power and energy registers for all 3 phases (total + fundamental).
- * @param[out] pData - pointer to POWER_ENERGY_DATA structure to fill.
- * @return status - SYS_STATUS_SUCCESS on success, non-zero on failure.
- */
-int afe_read_power_energy(struct power_energy_data *pData);
 
 #endif /* __AFE_CONFIG_H__ */

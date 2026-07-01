@@ -8,7 +8,6 @@ INCS += $(PLATFORM_DRIVERS)/maxim_gpio.h      		\
         $(PLATFORM_DRIVERS)/../common/maxim_dma.h	\
         $(PLATFORM_DRIVERS)/maxim_uart_stdio.h 		\
 	$(PLATFORM_DRIVERS)/maxim_usb_uart.h 		\
-        $(PLATFORM_DRIVERS)/maxim_trng.h        \
 	$(PLATFORM_DRIVERS)/maxim_usb_uart_descriptors.h 
 
 SRCS += $(PLATFORM_DRIVERS)/maxim_delay.c     		\
@@ -22,7 +21,6 @@ SRCS += $(PLATFORM_DRIVERS)/maxim_delay.c     		\
         $(PLATFORM_DRIVERS)/maxim_uart.c      		\
         $(PLATFORM_DRIVERS)/../common/maxim_dma.c      	\
         $(PLATFORM_DRIVERS)/maxim_uart_stdio.c 		\
-        $(PLATFORM_DRIVERS)/maxim_trng.c        \
 	$(PLATFORM_DRIVERS)/maxim_usb_uart.c
 
 SRC_DIRS += 	$(MAXIM_LIBRARIES)/MAXUSB/src/core/musbhsfc	\

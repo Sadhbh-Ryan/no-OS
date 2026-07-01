@@ -9,7 +9,6 @@ SRCS += $(DRIVERS)/api/no_os_uart.c     			\
 	$(DRIVERS)/api/no_os_irq.c     				\
 	$(DRIVERS)/api/no_os_dma.c     				\
 	$(DRIVERS)/api/no_os_gpio.c     			\
-	$(DRIVERS)/api/no_os_trng.c					\
         $(NO-OS)/util/no_os_fifo.c      			\
         $(NO-OS)/util/no_os_list.c      			\
         $(NO-OS)/util/no_os_lf256fifo.c 			\
@@ -34,8 +33,7 @@ INCS += $(INCLUDE)/no_os_delay.h     				\
         $(INCLUDE)/no_os_init.h      				\
         $(INCLUDE)/no_os_print_log.h    			\
         $(INCLUDE)/no_os_alloc.h     				\
-        $(INCLUDE)/no_os_mutex.h					\
-		$(INCLUDE)/no_os_trng.h
+        $(INCLUDE)/no_os_mutex.h
 
 # LCD driver
 SRCS +=	$(NO-OS)/drivers/display/nhd_c12832a1z/nhd_c12832a1z.c
@@ -49,7 +47,7 @@ SRCS += $(PROJECT)/src/platform/$(PLATFORM)/parameters.c
 SRCS += $(PROJECT)/src/platform/$(PLATFORM)/main.c 
 
 # PQM library
-PQLIB_PATH := $(PROJECT)/src/pqlib_dir
+PQLIB_PATH := $(PROJECT)/pqlib_dir
 ifdef PQLIB_PATH
 INCS += ${PQLIB_PATH}/include/config/adi_pqlib_cfg.h   		\
 	${PQLIB_PATH}/include/ade9430.h       			\
@@ -80,11 +78,8 @@ ifeq ($(INTERFACE), ethernet)
 	SRCS += $(NO-OS)/network/tcp_socket.c
 endif
 
-# ifeq ($(INTERFACE), ethernet_t1l)
+ifeq ($(INTERFACE), ethernet_t1l)
 	LIBRARIES += lwip
-	INCS += $(PROJECT)/src/common/sntp.h
-	SRCS += $(PROJECT)/src/common/sntp.c
-
 	INCS += $(NO-OS)/network/tcp_socket.h			\
 		$(NO-OS)/network/noos_mbedtls_config.h		\
 		$(NO-OS)/network/network_interface.h		\
@@ -99,40 +94,7 @@ endif
 
 	INCS += $(DRIVERS)/net/oa_tc6/oa_tc6.h
 	SRCS += $(DRIVERS)/net/oa_tc6/oa_tc6.c
-# endif
-
-ifndef MQTT_SERVER_IP
-MQTT_SERVER_IP=iot-hub-236wtbntgkg4a.azure-devices.net
 endif
-
-ifndef MQTT_SERVER_PORT
-MQTT_SERVER_PORT=8883
-endif
-
-ifndef AZURE_DEVICE_ID
-AZURE_DEVICE_ID= PQMON
-endif
-
-ifndef AZURE_REQUEST_ID
-AZURE_REQUEST_ID= 1
-endif
-
-ifndef AZURE_DEVICE_PRIMARY_KEY
-AZURE_DEVICE_PRIMARY_KEY= XAdbEv4W3O92Tm3w1eFToLRsccr7yyOVY35mP+HO408=
-endif
-
-CFLAGS += -DMQTT_SERVER_IP=\"$(MQTT_SERVER_IP)\"
-CFLAGS += -DMQTT_SERVER_PORT=$(MQTT_SERVER_PORT)
-CFLAGS += -DAZURE_DEVICE_ID=\"$(AZURE_DEVICE_ID)\"
-CFLAGS += -DAZURE_REQUEST_ID=\"$(AZURE_REQUEST_ID)\"
-CFLAGS += -DAZURE_DEVICE_PRIMARY_KEY=\"$(AZURE_DEVICE_PRIMARY_KEY)\"
-
-LIBRARIES += azure-sdk-for-c
-LIBRARIES += mqtt
-LIBRARIES += mbedtls
-INCS += $(NO-OS)/libraries/mbedtls/include/mbedtls/ssl.h
-MBED_TLS_CONFIG_FILE = $(PROJECT)/src/common/noos_mbedtls_config.h
-SRC_DIRS += $(NO-OS)/libraries/mbedtls/library
 
 INCS += $(INCLUDE)/no_os_crc8.h
 SRCS += $(NO-OS)/util/no_os_crc8.c
@@ -142,4 +104,4 @@ INCS += $(INCLUDE)/no_os_list.h \
 
 EXTRA_FILES +=	$(EXTRA_MATH_PQM) ${EXTRA_MATH_LIB}
 
-EXTRA_LIBS += m
+

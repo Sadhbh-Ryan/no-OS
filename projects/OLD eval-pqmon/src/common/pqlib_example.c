@@ -33,12 +33,6 @@
 
 #include "pqlib_example.h"
 #include "iio_pqm.h"
-#include "afe_calibration.h"
-#include "flash_storage.h"
-#ifdef UART_EXPORT_ENABLED
-// #include "uart_export.h"
-#include "mqtt_data_export.h"
-#endif
 
 PQLIB_EXAMPLE pqlibExample;
 extern volatile uint8_t newSyncTimeAvailable = 0;
@@ -54,14 +48,6 @@ int pqm_measurement_init(void)
 	pqlibExample.processedCycles = 0;
 	pqlibExample.inputCycle.sequenceNumber = 0;
 	pqlibExample.input1012Cycles.sequenceNumber = 0;
-	pqlibExample.calibrationRequested = false;
-
-	/* Initialize calibration context */
-	calibration_init();
-
-	/* Initialize flash storage for calibration persistence */
-	flash_storage_init();
-
 	status = open_pqlib(&pqlibExample);
 
 	return status;
@@ -118,23 +104,8 @@ int pqm_start_measurement(bool waitingForSync)
 
 int pqm_one_cycle(void *)
 {
-
-	/* Check for calibration request first */
-	if (pqlibExample.calibrationRequested || calibration_is_active()) {
-		if (pqlibExample.state != PQLIB_STATE_CALIBRATING) {
-			pqlibExample.state = PQLIB_STATE_CALIBRATING;
-		}
-		int cal_status = calibration_process_cycle();
-		if (!calibration_is_active()) {
-			/* Calibration complete, resume normal operation */
-			pqlibExample.calibrationRequested = false;
-			pqlibExample.state = PQLIB_STATE_WAITING_FOR_TRIGGER;
-			pqm_start_measurement(false);
-		}
-		return cal_status;
-	}
-
 	if (configChanged) {
+		printf("Recallibrating\n\r");
 		pqm_start_measurement(false);
 		configChanged = false;
 		pqlibExample.state = PQLIB_STATE_WAITING_FOR_TRIGGER;
@@ -163,7 +134,6 @@ int open_pqlib(PQLIB_EXAMPLE *pExample)
 int config_measurement(PQLIB_EXAMPLE *pExample)
 {
 	int status = 0;
-	uint32_t config = 0;
 
 	ADI_PQLIB_RESULT pqlibStatus = ADI_PQLIB_RESULT_SUCCESS;
 	ADI_PQLIB_CONFIG *pLibConfig = &pqlibExample.config;
@@ -180,30 +150,6 @@ int config_measurement(PQLIB_EXAMPLE *pExample)
 
 	if (status == 0) {
 		status = afe_set_ref_channel(pExampleConfig->refChannel);
-	}
-
-	/* Configure VLEVEL for headroom above nominal voltage */
-	if (status == 0) {
-		config = 2 * (uint32_t)1144084;
-		status = afe_write_32bit_reg(REG_VLEVEL, (uint32_t *)&config);
-	}
-
-	/* Energy accumulation time: 100 half-cycles at 50Hz, 120 at 60Hz = ~1 second */
-	if (status == 0) {
-		config = (pExampleConfig->nominalFrequency == 50) ? 99 : 119;
-		status = afe_write_16bit_reg(REG_EGY_TIME, (uint16_t *)&config);
-	}
-
-	/* Enable energy comparison for all 3 phases */
-	if (status == 0) {
-		config = 0x0007;
-		status = afe_write_16bit_reg(REG_COMPMODE, (uint16_t *)&config);
-	}
-
-	/* Energy/power accumulation: EGY_POW_EN + zero-crossing + accumulation done */
-	if (status == 0) {
-		config = 0x0013;
-		status = afe_write_16bit_reg(REG_EP_CFG, (uint16_t *)&config);
 	}
 
 	if (status == 0) {
@@ -247,13 +193,6 @@ int config_measurement(PQLIB_EXAMPLE *pExample)
 		}
 
 		status = process_pqlib_error(pExample, pqlibStatus);
-	}
-
-	/* Auto-load calibration from flash if available, but skip if calibration
-	 * was just performed (to avoid overwriting newly calibrated values) */
-	if (status == 0 && flash_storage_is_initialized() &&
-	    flash_has_valid_calibration() && !calibration_is_done()) {
-		flash_load_and_apply_calibration();
 	}
 
 	return status;
@@ -334,10 +273,6 @@ int process_and_prepare_output()
 			if (status != 0) {
 				break;
 			}
-#ifdef UART_EXPORT_ENABLED
-			// uart_export_send();
-
-#endif
 		}
 
 		status = SYS_STATUS_PQLIB_RUNNING;
@@ -580,12 +515,6 @@ void set_default_config(EXAMPLE_CONFIG *pConfig)
 	pConfig->enableIconsel = false;
 	pConfig->useExternalTimestamp = false;
 	pConfig->vconsel = VCONSEL_4W_WYE;
-	pConfig->calNominalCurrent = 10.0f;     /* 10 Arms for gain cal */
-	pConfig->calNominalVoltage = 230.0f;    /* 230 Vrms for gain cal */
-	pConfig->calOffsetCurrent = 1.0f;       /* 1.0 Arms for offset cal */
-	pConfig->calOffsetVoltage = 10.0f;      /* 10 Vrms for offset cal */
-	pConfig->currentPgaGain = 1.0f;         /* Default PGA gain */
-	pConfig->voltagePgaGain = 1.0f;         /* Default PGA gain */
 }
 
 int SyncLibTime(PQLIB_EXAMPLE *pExample, bool checkRtcTime)

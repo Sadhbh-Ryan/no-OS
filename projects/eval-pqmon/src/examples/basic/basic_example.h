@@ -36,6 +36,9 @@
 
 #include "common_data.h"
 #include "no_os_error.h"
+#include "no_os_alloc.h"
+
+extern char azure_topic[128];
 
 /**
  * @brief Initialize pqm descriptor
