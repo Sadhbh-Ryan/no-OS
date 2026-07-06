@@ -92,7 +92,6 @@ struct no_os_uart_init_param iio_demo_usb_ip = {
 }; 
 #endif
 
-
 #if defined(PQM_CONN_T1L)
 
 const struct no_os_gpio_init_param adin1110_int_ip = {

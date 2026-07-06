@@ -65,11 +65,7 @@ static char mqtt_hub_user_name[256];
 static char mqtt_hub_client_id[64];
 static char mqtt_hub_password[256];
 static char reported_topic[128];
-// static char azure_topic[128];
 char azure_topic[128];
-
-// float rms_voltages[3];  float rms_currents[3]; float power[3]; float energy[3];
-
 
 ip_addr_t dns_ip_iothub;
 bool dns_resolved = false;
