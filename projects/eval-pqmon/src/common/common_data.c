@@ -89,22 +89,11 @@ struct no_os_uart_init_param iio_demo_usb_ip = {
 	.stop = NO_OS_UART_STOP_1_BIT,
 	.extra = UART_EXTRA,
 	.platform_ops = &max_usb_uart_ops,
-}; // USB initialization parameter for iio connection
-// #elif defined(PQM_CONN_SERIAL) || defined(PQM_CONN_T1L)
+}; 
 #endif
-// struct no_os_uart_init_param iio_demo_serial_ip = {
-// 	.device_id = UART_DEVICE_ID,
-// 	.irq_id = UART_IRQ_ID,
-// 	.asynchronous_rx = true,
-// 	.baud_rate = UART_BAUDRATE,
-// 	.size = NO_OS_UART_CS_8,
-// 	.parity = NO_OS_UART_PAR_NO,
-// 	.stop = NO_OS_UART_STOP_1_BIT,
-// 	.extra = UART_EXTRA,
-// 	.platform_ops = &max_uart_ops,
-// }; // SERIAL initialization parameter for iio connection
 
-// #if defined(PQM_CONN_T1L)
+
+#if defined(PQM_CONN_T1L)
 
 const struct no_os_gpio_init_param adin1110_int_ip = {
 	.port = 2,
@@ -180,8 +169,7 @@ struct lwip_network_param lwip_ip = {
 	.platform_ops = &adin1110_lwip_ops,
 	.mac_param = &adin1110_ip,
 };
-// #endif
-// #endif
+#endif
 
 IIO_BUFF_TYPE iio_data_buffer_loc[MAX_SIZE_BASE_ADDR] = {0};
 

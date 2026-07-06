@@ -321,7 +321,7 @@ int basic_pqm_firmware()
 	}
 
 	no_os_mdelay(100);
-
+#if defined(PQM_CONN_T1L)
 	uint8_t adin1110_mac_address[6] = {0x00, 0x18, 0x80, 0x03, 0x25, 0x60};
 	struct no_os_gpio_desc *adin1110_swpd_gpio;
 	struct no_os_gpio_desc *adin1110_tx2p4_gpio;
@@ -346,8 +346,19 @@ int basic_pqm_firmware()
 
 	memcpy(adin1110_ip.mac_address, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
 	memcpy(lwip_ip.hwaddr, adin1110_mac_address, NETIF_MAX_HWADDR_LEN);
+#endif
 
-		ret = no_os_lwip_init(&lwip_desc, &lwip_ip);
+#if defined(PQM_CONN_ETH)
+	struct w5500_network_dev *net_dev;
+
+	status = w5500_network_init(&net_dev, &w5500_network_ip);
+	if (status)
+		return status;
+
+	app_init_param.net_dev = net_dev;
+#endif
+
+	ret = no_os_lwip_init(&lwip_desc, &lwip_ip);
 	if (ret) {
 		printf("LWIP init error: %d (%s)\n", ret, strerror(-ret));
 		goto exit;

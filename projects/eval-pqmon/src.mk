@@ -69,7 +69,7 @@ endif
 ifeq ($(INTERFACE), serial)
 endif
 
-ifeq ($(INTERFACE), ethernet)
+ifeq ($(CONNECTION), ethernet)
 	INCS += $(DRIVERS)/net/w5500/w5500.h
 	INCS += $(NO-OS)/network/w5500_network/w5500_network.h
 	INCS += $(NO-OS)/network/network_interface.h
@@ -80,11 +80,7 @@ ifeq ($(INTERFACE), ethernet)
 	SRCS += $(NO-OS)/network/tcp_socket.c
 endif
 
-# ifeq ($(INTERFACE), ethernet_t1l)
-	LIBRARIES += lwip
-	INCS += $(PROJECT)/src/common/sntp.h
-	SRCS += $(PROJECT)/src/common/sntp.c
-
+ifeq ($(CONNECTION), ethernet_t1l)
 	INCS += $(NO-OS)/network/tcp_socket.h			\
 		$(NO-OS)/network/noos_mbedtls_config.h		\
 		$(NO-OS)/network/network_interface.h		\
@@ -99,7 +95,7 @@ endif
 
 	INCS += $(DRIVERS)/net/oa_tc6/oa_tc6.h
 	SRCS += $(DRIVERS)/net/oa_tc6/oa_tc6.c
-# endif
+endif
 
 ifndef MQTT_SERVER_IP
 MQTT_SERVER_IP=iot-hub-236wtbntgkg4a.azure-devices.net
@@ -126,6 +122,10 @@ CFLAGS += -DMQTT_SERVER_PORT=$(MQTT_SERVER_PORT)
 CFLAGS += -DAZURE_DEVICE_ID=\"$(AZURE_DEVICE_ID)\"
 CFLAGS += -DAZURE_REQUEST_ID=\"$(AZURE_REQUEST_ID)\"
 CFLAGS += -DAZURE_DEVICE_PRIMARY_KEY=\"$(AZURE_DEVICE_PRIMARY_KEY)\"
+
+LIBRARIES += lwip
+INCS += $(PROJECT)/src/common/sntp.h
+SRCS += $(PROJECT)/src/common/sntp.c
 
 LIBRARIES += azure-sdk-for-c
 LIBRARIES += mqtt

@@ -1,4 +1,5 @@
 INTERFACE ?= usb
+CONNECTION ?= ethernet_t1l
 
 BASIC_EXAMPLE = y
 IIOD=y
@@ -15,8 +16,8 @@ CFLAGS += -DPQM_CONN_USB
 CFLAGS += -DNO_OS_USB_UART
 endif
 
-ifeq ($(INTERFACE), ethernet)
-$(info Using ETHERNET as interface for IIO communication)
+ifeq ($(CONNECTION), ethernet)
+$(info Using ETHERNET as connection for MQTT communication)
 CFLAGS += -DPQM_CONN_USB
 CFLAGS += -DNO_OS_USB_UART
 CFLAGS += -DPQM_CONN_ETH
@@ -29,11 +30,15 @@ NO_OS_NETMASK=255.255.255.0
 NO_OS_GATEWAY=192.168.1.1
 endif
 
+ifeq ($(CONNECTION), ethernet_t1l)
+$(info Using 10baseT1L as connection for MQTT communication)
+CFLAGS += -DPQM_CONN_T1L
 CFLAGS += -DNO_OS_LWIP_NETWORKING
 CFLAGS += -DNO_OS_LWIP_INIT_ONETIME=1
 NO_OS_IP=192.168.0.60
 NO_OS_NETMASK=255.255.255.0
 NO_OS_GATEWAY=192.168.0.1
+endif
 
 UART_EXPORT ?= y
 ifeq ($(UART_EXPORT), y)

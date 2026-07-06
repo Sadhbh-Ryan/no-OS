@@ -38,11 +38,11 @@
 #include "w5500_network.h"
 #endif
 
-// #if defined(PQM_CONN_T1L)
+#if defined(PQM_CONN_T1L)
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
 #include "adin1110.h"
-// #endif
+#endif
 
 #include "adi_pqlib.h"
 #include "iio.h"
@@ -87,7 +87,7 @@ extern struct no_os_uart_init_param iio_demo_usb_ip;
 #elif defined(PQM_CONN_SERIAL)
 extern struct no_os_uart_init_param iio_demo_serial_ip;
 #endif
-// #elif defined(PQM_CONN_T1L)
+#if defined(PQM_CONN_T1L)
 extern struct no_os_uart_init_param iio_demo_serial_ip;
 extern const struct no_os_gpio_init_param adin1110_int_ip;
 extern const struct no_os_gpio_init_param adin1110_rst_gpio_ip;
@@ -100,7 +100,7 @@ extern const struct no_os_spi_init_param adin1110_spi_ip;
 
 extern struct adin1110_init_param adin1110_ip;
 extern struct lwip_network_param lwip_ip;
-// #endif
+#endif
 
 extern struct pqm_init_para pqm_ip;
 extern struct no_os_spi_init_param spi_egy_ip;
