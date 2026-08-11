@@ -399,10 +399,6 @@ int mqtt_baremetal_main()
 	if (ret != 0)
 		return ret;
 
-	// ret = ad7124_calibrate(dev);
-	// if (ret)
-	// 	printf("ADC calibration failed! (%d)\n", ret);
-
 	/* Enable excitation current 250uA on AIN0 */
 	ret = ad7124_reg_write_msk(dev, AD7124_IOCon1, AD7124_IO_CTRL1_REG_IOUT0(3),
 				   AD7124_IO_CTRL1_REG_IOUT0(0x7));
@@ -425,6 +421,10 @@ int mqtt_baremetal_main()
 				   AD7124_IO_CTRL1_REG_PDSW);
 	if (ret != 0)
 		return ret;
+
+	ret = ad7124_calibrate(dev);
+	if (ret)
+		printf("ADC calibration failed! (%d)\n", ret);
 
 	/* Enable saturation error diagnostic */
 	ad7124_regs[AD7124_Error_En].value = 0x10000;
@@ -574,6 +574,8 @@ int mqtt_baremetal_main()
 		goto free_mqtt;
 	}
 
+	no_os_mdelay(1000);
+
 	ret = socket_connect(tcp_socket, &ip_addr);
 	if (ret) {
 		printf("Couldn't connect to the remote TCP socket: %d (%s)\n", ret,
@@ -613,8 +615,6 @@ int mqtt_baremetal_main()
 	};
 
 	while(1){
-
-		/* Wait for conversion */
 		/* Wait for conversion */
 		ret = ad7124_wait_for_conv_ready(dev, ad7124_timeout);
 		if (ret != 0)
@@ -641,6 +641,17 @@ int mqtt_baremetal_main()
 		       ad7124_regs[AD7124_Error].value);
 
 		no_os_lwip_step(tcp_socket->net->net, NULL);
+
+		// T1L Connection Type
+		char t1l_connection[] = "SPoE T1L";
+		test_msg.len = msg_len;
+		memset(val_buff, 0, sizeof(val_buff));
+		msg_len = snprintf(val_buff, sizeof(val_buff), "T1L Connection: %s", t1l_connection);
+		// printf("T1L Connection: %s\n\r", t1l_connection);
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
+
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
 		msg_len = snprintf(val_buff, sizeof(val_buff), "PT100/Temperature: %.3f ", temperature);
@@ -651,7 +662,7 @@ int mqtt_baremetal_main()
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		
-		no_os_mdelay(2000);
+		no_os_mdelay(1000);
 	}
 
 	return 0;

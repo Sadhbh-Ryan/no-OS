@@ -50,7 +50,7 @@
  * @todo:
  * - complete SNTP_CHECK_RESPONSE checks 3 and 4
  */
-
+#ifdef NO_OS_LWIP_NETWORKING
 #include "sntp.h"
 
 #include "lwip/opt.h"
@@ -964,3 +964,4 @@ sntp_getservername(u8_t idx)
 #endif /* SNTP_SERVER_DNS */
 
 #endif /* LWIP_UDP */
+#endif

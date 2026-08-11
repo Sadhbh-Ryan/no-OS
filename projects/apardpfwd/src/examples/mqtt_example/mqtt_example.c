@@ -395,7 +395,7 @@ int example_main()
 	// Initalise SNTP
 	sntp_init();
 	no_os_mdelay(2000);
-
+	
 	struct no_os_trng_init_param trng_ip = {
 		.platform_ops = &max_trng_ops
 	};
@@ -486,6 +486,15 @@ int example_main()
 	while(1){
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
+		char t1l_connection[] = "T1L";
+		test_msg.len = msg_len;
+		memset(val_buff, 0, sizeof(val_buff));
+		msg_len = snprintf(val_buff, sizeof(val_buff), "T1L Connection: %s", t1l_connection);
+		// printf("T1L Connection: %s\n\r", t1l_connection);
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
+
 		// Temperature Sensor - ADT7420
 		temp_now = adt7420_get_temperature(adt7420);
 		memset(val_buff, 0, sizeof(val_buff));
@@ -493,7 +502,7 @@ int example_main()
 		// printf("Temp read is %lf\r\n", temp_now);
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(2000);
+		no_os_mdelay(1000);
 
 		// Accelerometer Sensor - ADXL355
 		ret = adxl355_get_xyz(adxl355, &x[0], &y[0], &z[0]);
@@ -509,7 +518,7 @@ int example_main()
 		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: Null");
 		}test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(100);
+		no_os_mdelay(1000);
 
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
@@ -520,7 +529,7 @@ int example_main()
 		}
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(100);
+		no_os_mdelay(1000);
 
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
@@ -531,7 +540,7 @@ int example_main()
 		}
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(2000);
+		no_os_mdelay(1000);
 	}
 	return 0;
 

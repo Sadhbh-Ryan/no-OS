@@ -316,7 +316,7 @@ int basic_pqm_firmware()
 		goto exit;
 	}
 
-	no_os_mdelay(100);
+	no_os_mdelay(1000);
 #if defined(PQM_CONN_T1L)
 	uint8_t adin1110_mac_address[6] = {0x00, 0x18, 0x80, 0x03, 0x25, 0x60};
 	struct no_os_gpio_desc *adin1110_swpd_gpio;
@@ -449,7 +449,9 @@ int basic_pqm_firmware()
 		printf("MQTT init error: %d (%s)\n", ret, strerror(-ret));
 		goto exit;
 	}
-	no_os_mdelay(100);
+	
+	no_os_mdelay(1000);
+
 	ret = socket_connect(tcp_socket, &ip_addr);
 	if (ret) {
 		printf("Couldn't connect to the remote TCP socket: %d (%s)\n", ret,
@@ -474,7 +476,7 @@ int basic_pqm_firmware()
 		.username = mqtt_hub_user_name,
 		.password = mqtt_hub_password
 	};
-	no_os_mdelay(100);
+
 	ret = mqtt_connect(mqtt, &conn_config, NULL);
 	if (ret) {
 		socket_disconnect(tcp_socket);
@@ -492,6 +494,7 @@ int basic_pqm_firmware()
 	while(1){
 		pqm_one_cycle(NULL);
 
+		no_os_lwip_step(tcp_socket->net->net, NULL);
 		data_export_send(mqtt);
 	}
 

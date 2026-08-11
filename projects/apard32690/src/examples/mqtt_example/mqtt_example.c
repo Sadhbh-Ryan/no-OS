@@ -43,7 +43,6 @@
 
 #include "adt7420.h"
 #include "adxl355.h"
-// #include "sensor_init.h"
 
 #include "lwip_socket.h"
 #include "lwip_adin1110.h"
@@ -162,9 +161,9 @@ int create_and_configure_mqtt_client_for_iot_hub(void){
 	if (result != AZ_OK) {
 		return result;
 	} 
-	else {
-		printf("mqtt hub username: %s\n", mqtt_hub_user_name);
-	}
+	// else {
+	// 	printf("mqtt hub username: %s\n", mqtt_hub_user_name);
+	// }
 
 	// Get signature in string to sign format
 	result = az_iot_hub_client_sas_get_signature(&my_client, expiration_time_epoch, signature_span, &out_signature_span);
@@ -210,9 +209,9 @@ int create_and_configure_mqtt_client_for_iot_hub(void){
 	if (result != AZ_OK){
 		return result;
 	} 
-	else {
-		printf("SAS Token: %s\n", mqtt_hub_password);
-	}
+	// else {
+	// 	printf("SAS Token: %s\n", mqtt_hub_password);
+	// }
 
 	// Allow data ro be published to azure IoT hub
 	return az_iot_hub_client_properties_get_reported_publish_topic(&my_client, my_request_id, reported_topic, sizeof(reported_topic), NULL);
@@ -465,6 +464,15 @@ int mqtt_example_main()
 	while(1){
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
+		char t1l_connection[] = "T1L";
+		test_msg.len = msg_len;
+		memset(val_buff, 0, sizeof(val_buff));
+		msg_len = snprintf(val_buff, sizeof(val_buff), "T1L Connection: %s", t1l_connection);
+		// printf("T1L Connection: %s\n\r", t1l_connection);
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
+
 		// Temperature Sensor - ADT7420
 		temp_now = adt7420_get_temperature(adt7420);
 		memset(val_buff, 0, sizeof(val_buff));
@@ -472,7 +480,7 @@ int mqtt_example_main()
 		// printf("Temp read is %lf\r\n", temp_now);
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(2000);
+		no_os_mdelay(1000);
 
 		// Accelerometer Sensor - ADXL355
 		ret = adxl355_get_xyz(adxl355, &x[0], &y[0], &z[0]);
@@ -488,7 +496,7 @@ int mqtt_example_main()
 		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: Null");
 		}test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(100);
+		no_os_mdelay(1000);
 
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
@@ -499,7 +507,7 @@ int mqtt_example_main()
 		}
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(100);
+		no_os_mdelay(1000);
 
 		memset(val_buff, 0, sizeof(val_buff));
 		if (!ret) {
@@ -510,7 +518,7 @@ int mqtt_example_main()
 		}
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-		no_os_mdelay(2000);
+		no_os_mdelay(1000);
 	}
 	return 0;
 

@@ -34,6 +34,9 @@
  * Author: Frédéric Bernon, Simon Goldschmidt
  *
  */
+
+#ifdef NO_OS_LWIP_NETWORKING
+
 #ifndef LWIP_HDR_APPS_SNTP_H
 #define LWIP_HDR_APPS_SNTP_H
 
@@ -81,3 +84,5 @@ void sntp_servermode_dhcp(int set_servers_from_dhcp);
 #endif
 
 #endif /* LWIP_HDR_APPS_SNTP_H */
+
+#endif

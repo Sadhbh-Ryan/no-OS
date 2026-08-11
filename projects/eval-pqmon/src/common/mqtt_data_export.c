@@ -63,6 +63,14 @@ void data_export_send(struct mqtt_desc *mqtt)
 		.retained = false
 	};
 
+	char t1l_connection[] = "T1L";
+	memset(val_buff, 0, sizeof(val_buff));
+	snprintf(val_buff, sizeof(val_buff), "T1L Connection: %s", t1l_connection);
+	// printf("T1L Connection: %s\n\r", t1l_connection);
+	test_msg.len = strlen(val_buff);
+	ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+	no_os_mdelay(1000);
+
 	//RMS Voltage & Current
     for (i = 0; i < 3; i++) {
 		/* RMS: VA, VB, VC */
@@ -79,7 +87,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	//RMS Neutral Current
 	rms_neutral_current = convert_rms_type(out->params1012Cycles.currentParams[3].mag, iscale);
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before continuing
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before continuing
 
 	POWER_ENERGY_DATA *pe = &pqlibExample.powerEnergy;
 	float pscale = vscale * iscale;
@@ -92,7 +100,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		active_energy[i] = convert_energy_type(pe->activeEnergyHi[i], pscale);
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before continuing
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before continuing
 
 	for (i = 0; i < 3; i++) {
 		/* Reactive Energy: RE_A, RE_B, RE_C */
@@ -102,7 +110,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		power_factor[i] = compute_power_factor(pe->activeEnergyHi[i], pe->reactiveEnergyHi[i]);
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before continuing
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before continuing
 
 	snprintf(val_buff, sizeof(val_buff), "RMS Voltages: %.2f V, %.2f V, %.2f V", rms_voltages[0], rms_voltages[1], rms_voltages[2]);
 	test_msg.len = strlen(val_buff);
@@ -114,7 +122,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	// else {
 	// 	printf("Published message: %s\n", val_buff);
 	// }
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	if (out->events.dipCount > prev_dip) {
 		uint32_t new_dips = out->events.dipCount - prev_dip;
@@ -130,7 +138,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		prev_dip = out->events.dipCount;
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	if (out->events.swellCount > prev_swell) {
 		uint32_t new_swell = out->events.swellCount - prev_swell;
@@ -146,7 +154,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		prev_swell = out->events.swellCount;
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	if (out->events.intrpCount > prev_intrp) {
 		uint32_t new_intrp = out->events.intrpCount - prev_intrp;
@@ -162,7 +170,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		prev_intrp = out->events.intrpCount;
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	if (out->events.rvcCount > prev_rvc) {
 		uint32_t new_rvc = out->events.rvcCount - prev_rvc;
@@ -178,7 +186,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 		prev_rvc = out->events.rvcCount;
 	}
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	snprintf(val_buff, sizeof(val_buff), "RMS Currents: %.2f A, %.2f A, %.2f A", rms_currents[0], rms_currents[1], rms_currents[2]);
 	test_msg.len = strlen(val_buff);
@@ -191,7 +199,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	// 	printf("Published message: %s\n", val_buff);
 	// }
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	snprintf(val_buff, sizeof(val_buff), "RMS Neutral Current: %.2f A", rms_neutral_current);
 	test_msg.len = strlen(val_buff);
@@ -204,7 +212,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	// 	printf("Published message: %s\n", val_buff);
 	// }
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	snprintf(val_buff, sizeof(val_buff), "Active Power: %.4f W, %.4f W, %.4f W", active_power[0], active_power[1], active_power[2]);
 	test_msg.len = strlen(val_buff);
@@ -216,7 +224,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	// else {
 	// 	printf("Published message: %s\n", val_buff);
 	// }
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	snprintf(val_buff, sizeof(val_buff), "Active Energy: %.6f Wh, %.6f Wh, %.6f Wh", active_energy[0], active_energy[1], active_energy[2]);
 	test_msg.len = strlen(val_buff);
@@ -229,7 +237,7 @@ void data_export_send(struct mqtt_desc *mqtt)
 	// 	printf("Published message: %s\n", val_buff);
 	// }
 
-	no_os_mdelay(100); // Wait for 1000 milliseconds before sending the next message
+	no_os_mdelay(1000); // Wait for 1000 milliseconds before sending the next message
 
 	snprintf(val_buff, sizeof(val_buff), "Power Factor: %.4f, %.4f, %.4f", power_factor[0], power_factor[1], power_factor[2]);
 	test_msg.len = strlen(val_buff);

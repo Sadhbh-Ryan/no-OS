@@ -80,6 +80,23 @@ static char azure_topic[128];
 ip_addr_t dns_ip_iothub;
 bool dns_resolved = false;
 
+void HardFault_Handler(void) {
+	// Optionally collect fault information
+	volatile uint32_t *hardfault_address = (uint32_t *)0xE000ED2C; // HFSR address
+	volatile uint32_t hfsr = *hardfault_address;
+   
+	// Similarly, read the CFSR which is at 0xE000ED28
+	volatile uint32_t cfsr = *(volatile uint32_t *)0xE000ED28;
+	// Read MMFAR and BFAR if needed
+	volatile uint32_t mmfar = *(volatile uint32_t *)0xE000ED34;
+	volatile uint32_t bfar  = *(volatile uint32_t *)0xE000ED38;
+   
+	// Now invoke a breakpoint for the debugger to catch
+	__asm("BKPT #01");
+   
+	while (1); // Stay here so you can inspect via debugger
+}
+
 void dns_callback_function(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
 
@@ -241,7 +258,6 @@ int swiot1l_mqtt()
 	uint8_t fifo_entries = 0;
 
 	// GPIO Configuration 
-
 	struct no_os_gpio_desc *ad74413r_ldac_gpio;
 	// struct no_os_gpio_desc *ad74413r_reset_gpio;
 	struct no_os_gpio_desc *ad74413r_irq_gpio;
@@ -360,7 +376,6 @@ int swiot1l_mqtt()
 		// printf("Supply Voltage set to DacCode - %d\n\r", uDacCode);
 
 	ad74413r_set_channel_dac_code(ad74413r, 0, uDacCode);
-	// ad74413r_set_channel_dac_code(ad74413r, 3, 3000);
 
 	ret = adt75_init(&adt75, &adt75_ip);
 	if (ret)
@@ -422,24 +437,9 @@ int swiot1l_mqtt()
 	sntp_init();
 	no_os_mdelay(2000);
 
-	// char my_ca_cert[] = CA_CERT;
-	// char my_cli_cert[] = DEVICE_CERT;
-	// char my_cli_pk[] = DEVICE_PRIVATE_KEY;
-
 	struct no_os_trng_init_param trng_ip = {
 		.platform_ops = &max_trng_ops
 	};
-
-	// struct secure_init_param secure_params = {
-	// 	.trng_init_param = &trng_ip,
-	// 	.ca_cert = my_ca_cert,
-	// 	.ca_cert_len = NO_OS_ARRAY_SIZE(my_ca_cert),
-	// 	.cli_cert = my_cli_cert,
-	// 	.cli_cert_len = NO_OS_ARRAY_SIZE(my_cli_cert),
-	// 	.cli_pk = my_cli_pk,
-	// 	.cli_pk_len = NO_OS_ARRAY_SIZE(my_cli_pk),
-	// 	.cert_verify_mode = MBEDTLS_SSL_VERIFY_NONE
-	// };
 
 	struct secure_init_param secure_params = {
 		.trng_init_param = &trng_ip,
@@ -482,6 +482,8 @@ int swiot1l_mqtt()
 		goto free_socket;
 	}
 
+	no_os_mdelay(1000);
+
 	ret = socket_connect(tcp_socket, &ip_addr);
 	if (ret) {
 		pr_err("Couldn't connect to the remote TCP socket: %d (%s)\n", ret,
@@ -523,6 +525,14 @@ int swiot1l_mqtt()
 	while (1) {
 		no_os_lwip_step(tcp_socket->net->net, NULL);
 
+		char t1l_connection[] = "T1L";
+		memset(val_buff, 0, sizeof(val_buff));
+		msg_len = snprintf(val_buff, sizeof(val_buff), "T1L Connection: %s", t1l_connection);
+		// printf("T1L Connection: %s\n\r", t1l_connection);
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
+
 		//Vibration sensor - AD74413r
 		ad74413r_adc_get_value(ad74413r, 2, &val);
 		memset(val_buff, 0, sizeof(val_buff));
@@ -535,6 +545,7 @@ int swiot1l_mqtt()
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
 		if (ret)
 			return ret;
+		no_os_mdelay(1000);
 
 		// Temperature Sensor - ADT75
 		ret = adt75_get_single_temp(adt75, &adt75_val);
@@ -551,24 +562,12 @@ int swiot1l_mqtt()
 		}
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
 
 		// Accelerometer Sensor - ADXL355
-		printf("Single read\n");
 		ret = adxl355_get_xyz(adxl355_desc, &x[0], &y[0], &z[0]);
-
-		int bReadSucc = 0;
-
 		if (ret)
-		{
 			printf("Failed to read - %d\n\r", ret);
-		}
-		else
-		{
-			bReadSucc = 1; 
-			printf(" x=%d"".%09u", (int)x[0].integer, (abs)(x[0].fractional));
-			printf(" y=%d"".%09u", (int)y[0].integer, (abs)(y[0].fractional));
-			printf(" z=%d"".%09u \n\r", (int)z[0].integer, (abs)(z[0].fractional));
-		}
 
 		ret = adxl355_get_fifo_data(adxl355_desc,
 			&fifo_entries,
@@ -577,92 +576,44 @@ int swiot1l_mqtt()
 			&z[0]);
 		if (ret)
 			printf("Failed to read - %d\n\r", ret);
-		else
-		{
-			printf("Number of read entries from the FIFO %d \n\r", fifo_entries);
-			printf("Number of read data sets from the FIFO %d \n\r", fifo_entries / 3);
-			for (uint8_t idx = 0; idx < 32; idx++) {
-				if (idx < fifo_entries / 3) {
-					printf(" x=%d"".%09u m/s^2", (int)x[idx].integer, (abs)(x[idx].fractional));
-					printf(" y=%d"".%09u m/s^2", (int)y[idx].integer, (abs)(y[idx].fractional));
-					printf(" z=%d"".%09u m/s^2", (int)z[idx].integer, (abs)(z[idx].fractional));
-					printf("\n\r");
-				}
-			}
 
-			printf("==========================================================\n\r");
-		}
 		ret = adxl355_get_sts_reg(adxl355_desc, &status_flags);
 		if (ret)
 			printf("Failed to read - %d\n\r", ret);
-		else
-		{
-			printf("Activity flag = %d \n\r", (uint8_t)(status_flags.fields.Activity));
-			printf("DATA_RDY flag = %d \n\r", (uint8_t)(status_flags.fields.DATA_RDY));
-			printf("FIFO_FULL flag = %d \n\r", (uint8_t)(status_flags.fields.FIFO_FULL));
-			printf("FIFO_OVR flag = %d \n\r", (uint8_t)(status_flags.fields.FIFO_OVR));
-			printf("NVM_BUSY flag = %d \n\r", (uint8_t)(status_flags.fields.NVM_BUSY));
-			printf("===========================================================\n\r");
-		}
-
-		ret = adxl355_get_temp(adxl355_desc, &temp);
-		if (ret)
-			printf("Failed to read - %d\n\r", ret);
-		else
-		{
-			printf(" Temp =%d"".%09u millidegress Celsius \n\r", (int)temp.integer,
-				(abs)(temp.fractional));
-		}
 
 		// MQTT Publish x y z 
-
 		memset(val_buff, 0, sizeof(val_buff));
-
-		if (!bReadSucc)
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
+		} 
+		else {
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: Null");
 		}
-		else
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/x: %d.%09u", (int)x[0].integer, (abs)(x[0].fractional));
-		}
-
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-
-		no_os_mdelay(100);
-
-		memset(val_buff, 0, sizeof(val_buff));
-
-		if (!bReadSucc)
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
-		}
-		else
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
-		}
-
-		test_msg.len = msg_len;
-		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
-
-		no_os_mdelay(100);
+		no_os_mdelay(10000);
 
 		memset(val_buff, 0, sizeof(val_buff));
-
-		if (!bReadSucc)
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "Null");
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: %d.%09u", (int)y[0].integer, (abs)(y[0].fractional));
+		} 
+		else {
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/y: Null");
 		}
-		else
-		{
-			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
-		}
-
 		test_msg.len = msg_len;
 		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
 
-		no_os_mdelay(2000);
+		memset(val_buff, 0, sizeof(val_buff));
+		if (!ret) {
+		msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: %d.%09u", (int)z[0].integer, (abs)(z[0].fractional));
+		} 
+		else {
+			msg_len = snprintf(val_buff, sizeof(val_buff), "adxl355/accel/z: Null");
+		}
+		test_msg.len = msg_len;
+		ret = mqtt_publish(mqtt, azure_topic, &test_msg);
+		no_os_mdelay(1000);
 	}
 
 	return 0;
